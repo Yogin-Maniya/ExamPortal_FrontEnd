@@ -187,12 +187,26 @@ const EditExam = () => {
                       <Form.Control type="number" min="1" value={totalMarks} onChange={e=>setTotalMarks(e.target.value)} required/>
                     </Form.Group>
                   </Col>
-                  <Col md={6}>
-                    <Form.Group className="mb-3">
-                      <Form.Label><FaGraduationCap/> Class/Subject</Form.Label>
-                      <Form.Control type="text" value={className} onChange={e=>setClassName(e.target.value)} required/>
-                    </Form.Group>
-                  </Col>
+<Col md={6}>
+  <Form.Group className="mb-3">
+    <Form.Label><FaGraduationCap/> Class/Subject</Form.Label>
+    <Form.Select 
+      value={className} 
+      onChange={e => setClassName(e.target.value)} 
+      required
+    >
+      <option value="">Select Class</option>
+      <option value="B.Tech CSE">B.Tech CSE</option>
+      <option value="B.Tech ECE">B.Tech ECE</option>
+      <option value="B.Tech IT">B.Tech IT</option>
+      <option value="B.Tech ME">B.Tech ME</option>
+      <option value="B.Tech CE">B.Tech CE</option>
+      <option value="BCA">BCA</option>
+      <option value="BBA">BBA</option>
+    </Form.Select>
+  </Form.Group>
+</Col>
+
                 </Row>
                 <Form.Group className="mb-3">
                   <Form.Label><FaCalendarAlt/> Start Time</Form.Label>

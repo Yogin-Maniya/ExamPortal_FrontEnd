@@ -9,6 +9,16 @@ const Register = () => {
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
+  const classes = [
+    "B.Tech CSE",
+    "B.Tech ECE",
+    "B.Tech IT",
+    "B.Tech ME",
+    "B.Tech CE",
+    "BCA",
+    "BBA"
+  ];
+
   const handleChange = (e) => {
     setUser({ ...user, [e.target.name]: e.target.value });
   };
@@ -22,7 +32,7 @@ const Register = () => {
       return;
     }
 
-    setLoading(true); // Show loading indicator
+    setLoading(true);
 
     try {
       await registerUser(user);
@@ -31,7 +41,7 @@ const Register = () => {
     } catch (error) {
       setError(error.response?.data?.error || "Registration failed. Please try again.");
     } finally {
-      setLoading(false); // Hide loading indicator
+      setLoading(false);
     }
   };
 
@@ -71,15 +81,18 @@ const Register = () => {
 
           <div className="mb-3 input-group">
             <span className="input-group-text"><FaGraduationCap /></span>
-            <input
-              type="text"
+            <select
               name="studentClass"
-              placeholder="Class (e.g., 10th, 12th)"
               value={user.studentClass}
               onChange={handleChange}
               className="form-control"
               required
-            />
+            >
+              <option value="">Select Class</option>
+              {classes.map((cls, idx) => (
+                <option key={idx} value={cls}>{cls}</option>
+              ))}
+            </select>
           </div>
 
           <div className="mb-3 input-group">

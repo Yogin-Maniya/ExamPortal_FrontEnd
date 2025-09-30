@@ -8,27 +8,32 @@ const CreateExamModal = ({ onClose, onExamCreated }) => {
   const [totalMarks, setTotalMarks] = useState("");
   const [durationMinutes, setDurationMinutes] = useState("");
   const [className, setClassName] = useState("");
-  const [startTime, setStartTime] = useState(""); // New state for start time
+  const [startTime, setStartTime] = useState(""); 
   const [error, setError] = useState("");
   const navigate = useNavigate();
+
+  const classes = [
+    "B.Tech CSE",
+    "B.Tech ECE",
+    "B.Tech IT",
+    "B.Tech ME",
+    "B.Tech CE",
+    "BCA",
+    "BBA"
+  ];
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
 
-    // Validate form inputs
     if (!examName || !totalMarks || !durationMinutes || !className || !startTime) {
       setError("All fields are required.");
       return;
     }
 
     try {
-      // For demo purposes, assume adminId is stored in localStorage or use a default value (e.g., 1)
       const adminId = localStorage.getItem("adminId") || 1;
-
-      // Convert the startTime (string) to a Date object
       const parsedStartTime = new Date(startTime);
-      // Calculate the endTime by adding durationMinutes (converted to milliseconds)
       const computedEndTime = new Date(parsedStartTime.getTime() + parseInt(durationMinutes) * 60000);
 
       const response = await api.post("/admin/exams/create", {
@@ -41,13 +46,9 @@ const CreateExamModal = ({ onClose, onExamCreated }) => {
         adminId: parseInt(adminId)
       });
 
-      // Assume the backend returns the created exam id as response.data.examId.
       const createdExamId = response.data.examId;
-
       onExamCreated();
       onClose();
-
-      // Redirect to the exam questions page
       navigate(`/create-exam/${createdExamId}`);
     } catch (err) {
       setError(err.response?.data?.error || "Failed to create exam.");
@@ -94,15 +95,17 @@ const CreateExamModal = ({ onClose, onExamCreated }) => {
 
           <Form.Group className="mb-3" controlId="formClassName">
             <Form.Label>Class</Form.Label>
-            <Form.Control
-              type="text"
-              placeholder="Enter class (e.g., A, B)"
+            <Form.Select
               value={className}
               onChange={(e) => setClassName(e.target.value)}
-            />
+            >
+              <option value="">Select Class</option>
+              {classes.map((cls, idx) => (
+                <option key={idx} value={cls}>{cls}</option>
+              ))}
+            </Form.Select>
           </Form.Group>
 
-          {/* New Start Time field */}
           <Form.Group className="mb-3" controlId="formStartTime">
             <Form.Label>Start Time</Form.Label>
             <Form.Control
