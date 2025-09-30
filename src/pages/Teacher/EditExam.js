@@ -203,6 +203,7 @@ const EditExam = () => {
       <option value="B.Tech CE">B.Tech CE</option>
       <option value="BCA">BCA</option>
       <option value="BBA">BBA</option>
+      <option value="BBA">Demo</option>
     </Form.Select>
   </Form.Group>
 </Col>

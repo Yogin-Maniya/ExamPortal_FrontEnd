@@ -19,7 +19,8 @@ const CreateExamModal = ({ onClose, onExamCreated }) => {
     "B.Tech ME",
     "B.Tech CE",
     "BCA",
-    "BBA"
+    "BBA",
+    "Demo"
   ];
 
   const handleSubmit = async (e) => {
