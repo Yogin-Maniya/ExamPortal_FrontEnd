@@ -12,7 +12,6 @@ const useExamTimer = (initialTime, examStarted, handleSubmit) => {
   const { examId } = useParams();
   const [timeLeft, setTimeLeft] = useState(initialTime);
 
-  // load from localStorage if exists
   useEffect(() => {
     const storedTime = localStorage.getItem(`timeLeft-${examId}`);
     if (storedTime) setTimeLeft(parseInt(storedTime, 10));
@@ -28,7 +27,7 @@ const useExamTimer = (initialTime, examStarted, handleSubmit) => {
         localStorage.setItem(`timeLeft-${examId}`, newTime.toString());
         if (newTime <= 0) {
           clearInterval(timer);
-          handleSubmit(true); // Auto-submit
+          handleSubmit(true);
           return 0;
         }
         return newTime;
@@ -73,6 +72,7 @@ const TakeExam = () => {
 
   const [showSubmitModal, setShowSubmitModal] = useState(false);
   const [showRecoveryModal, setShowRecoveryModal] = useState(false);
+  const [showSizeModal, setShowSizeModal] = useState(false); // ✅ New state for small screen
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const [totalMarks, setTotalMarks] = useState(0);
@@ -190,7 +190,6 @@ const TakeExam = () => {
         setMarksPerQuestion(marksEach);
         setQuestions(questionResponse.data);
 
-        // 🔹 Set dynamic duration in seconds from backend field DurationMinutes
         const durationSeconds = examResponse.data.DurationMinutes * 60;
         setExamDurationSeconds(durationSeconds);
 
@@ -206,7 +205,6 @@ const TakeExam = () => {
   // ---------------------
   // Anti-Cheating
   // ---------------------
-  // Online/offline
   useEffect(() => {
     const handleOnline = () => setOnline(true);
     const handleOffline = () => setOnline(false);
@@ -218,7 +216,6 @@ const TakeExam = () => {
     };
   }, []);
 
-  // Blur/tab switching
   useEffect(() => {
     const handleBlur = () => { if (examStarted) setBlurCount(prev => prev + 1); };
     window.addEventListener("blur", handleBlur);
@@ -234,7 +231,6 @@ const TakeExam = () => {
     }
   }, [blurCount, handleSubmit]);
 
-  // Fullscreen / Connectivity Check
   useEffect(() => {
     const checkState = () => {
       if (!examStarted) return;
@@ -259,7 +255,6 @@ const TakeExam = () => {
     };
   }, [examStarted, fullscreenExitCount, handleSubmit, online, showRecoveryModal]);
 
-  // Resize
   useEffect(() => {
     const handleResize = () => {
       if (!examStarted) return;
@@ -272,7 +267,6 @@ const TakeExam = () => {
     return () => window.removeEventListener("resize", handleResize);
   }, [examStarted, handleSubmit]);
 
-  // Prevent cheating keys
   useEffect(() => {
     const preventKeys = e => {
       if (["F12", "ContextMenu"].includes(e.key) ||
@@ -290,7 +284,16 @@ const TakeExam = () => {
   // ---------------------
   // Exam Navigation
   // ---------------------
-  const startExam = () => { enterFullScreen(); setExamStarted(true); setWarning(""); };
+  const startExam = () => {
+    if (window.innerWidth < MIN_WIDTH || window.innerHeight < MIN_HEIGHT) {
+      setShowSizeModal(true); // ❌ Prevent start and show modal
+      return;
+    }
+    enterFullScreen();
+    setExamStarted(true);
+    setWarning("");
+  };
+
   const currentQuestion = questions[currentQuestionIndex];
   const totalQuestions = questions.length;
   const answeredQuestions = Object.keys(answers).length;
@@ -334,12 +337,27 @@ const TakeExam = () => {
         <li>⚠️ Multiple violations = auto-submit.</li>
       </ul>
       <Button variant="primary" size="lg" onClick={startExam}>Start Exam</Button>
+
+      {/* Small Screen Modal */}
+      <Modal show={showSizeModal} onHide={() => setShowSizeModal(false)} centered>
+        <Modal.Header closeButton className="bg-warning text-dark">
+          <Modal.Title>⚠️ Screen Too Small</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          <p>Your screen size is too small to start the exam.</p>
+          <p>💻 Minimum required: {MIN_WIDTH}x{MIN_HEIGHT}</p>
+          <p>Please use a larger screen or maximize your current window.</p>
+        </Modal.Body>
+        <Modal.Footer>
+          <Button variant="secondary" onClick={() => setShowSizeModal(false)}>OK</Button>
+        </Modal.Footer>
+      </Modal>
     </Container>
   );
 
   return (
     <Container fluid className="take-exam-container py-4" style={{ minHeight: '100vh' }}>
-      <Row className="gx-4">
+     <Row className="gx-4">
 
         {/* Left Panel */}
         <Col md={3} className="mb-4">
@@ -443,4 +461,3 @@ const TakeExam = () => {
 };
 
 export default TakeExam;
-
