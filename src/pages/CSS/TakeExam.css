@@ -1,0 +1,13 @@
+.take-exam-container { background-color: #f8f9fa; }
+.sticky-top { position: sticky; top: 20px; z-index: 10; }
+.question-navigation-panel { border: 1px solid #dee2e6; border-radius: 5px; padding: 5px; }
+.question-card { min-height: 600px; }
+.form-check.option-item { cursor: pointer; display: flex; align-items: center; transition: 0.2s; }
+.option-item:hover { background-color: #f1f1f1; border-color: #0d6efd; }
+.option-label { margin-left: 10px; font-size: 1.05rem; font-weight: 500; }
+
+.submission-overlay {
+  position: fixed; top:0; left:0; width:100%; height:100%; backdrop-filter: blur(8px);
+  background-color: rgba(0,0,0,0.8); z-index: 9999; display:flex; flex-direction: column; justify-content:center; align-items:center;
+}
+.submission-spinner { width: 6rem; height: 6rem; border-width: .5em; }
