@@ -122,7 +122,6 @@ const Dashboard = () => {
                         variant="primary"
                         onClick={() => {
                           const encryptedId = encryptId(exam.ExamId); // 🔒 Encrypt examId
-                          console.log("Encrypted ExamId:", encryptedId);
                           navigate(`/take-exam/${encodeURIComponent(encryptedId)}`);
                         }}
                       >
