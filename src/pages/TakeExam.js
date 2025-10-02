@@ -1,20 +1,9 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { getExamDetailsById, getExamDetails, submitExam } from "../services/api";
-import {jwtDecode} from "jwt-decode"; // ✅ Correct import
-import {
-  Container,
-  Card,
-  Button,
-  Spinner,
-  Form,
-  Modal,
-  ProgressBar,
-  Row,
-  Col,
-  Alert
-} from "react-bootstrap";
-import "./CSS/TakeExam.css";
+import { jwtDecode } from "jwt-decode";
+import { Container, Card, Button, Spinner, Form, Modal, ProgressBar, Row, Col, Alert } from "react-bootstrap";
+import './CSS/TakeExam.css';
 
 // ======================
 // 🚀 Custom Hook: Exam Timer
@@ -33,7 +22,7 @@ const useExamTimer = (initialTime, examStarted, handleSubmit) => {
     if (!examStarted || timeLeft <= 0) return;
 
     const timer = setInterval(() => {
-      setTimeLeft((prev) => {
+      setTimeLeft(prev => {
         const newTime = prev - 1;
         localStorage.setItem(`timeLeft-${examId}`, newTime.toString());
         if (newTime <= 0) {
@@ -50,9 +39,7 @@ const useExamTimer = (initialTime, examStarted, handleSubmit) => {
 
   const minutes = Math.floor(timeLeft / 60);
   const seconds = timeLeft % 60;
-  const timeDisplay = `${minutes < 10 ? "0" : ""}${minutes}m : ${
-    seconds < 10 ? "0" : ""
-  }${seconds}s`;
+  const timeDisplay = `${minutes < 10 ? '0' : ''}${minutes}m : ${seconds < 10 ? '0' : ''}${seconds}s`;
 
   return { timeLeft, timeDisplay };
 };
@@ -63,11 +50,7 @@ const useExamTimer = (initialTime, examStarted, handleSubmit) => {
 const SubmittingOverlay = () => (
   <div className="submission-overlay">
     <div className="submission-content">
-      <Spinner
-        animation="border"
-        variant="light"
-        className="submission-spinner"
-      />
+      <Spinner animation="border" variant="light" className="submission-spinner" />
       <h2 className="text-white mt-3">Submitting Exam...</h2>
       <p className="text-light">Please do not close or refresh your browser.</p>
     </div>
@@ -89,7 +72,7 @@ const TakeExam = () => {
 
   const [showSubmitModal, setShowSubmitModal] = useState(false);
   const [showRecoveryModal, setShowRecoveryModal] = useState(false);
-  const [showSizeModal, setShowSizeModal] = useState(false);
+  const [showSizeModal, setShowSizeModal] = useState(false); // ✅ New state for small screen
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const [totalMarks, setTotalMarks] = useState(0);
@@ -102,7 +85,7 @@ const TakeExam = () => {
   const [online, setOnline] = useState(navigator.onLine);
   const [examStarted, setExamStarted] = useState(false);
 
-  const [examDurationSeconds, setExamDurationSeconds] = useState(0);
+  const [examDurationSeconds, setExamDurationSeconds] = useState(0); // dynamic duration
 
   const MIN_WIDTH = 1024;
   const MIN_HEIGHT = 600;
@@ -128,64 +111,45 @@ const TakeExam = () => {
   // ---------------------
   // Handle Option Change
   // ---------------------
-  const handleOptionChange = useCallback(
-    (questionId, option) => {
-      setAnswers((prev) => {
-        const newAnswers = { ...prev, [questionId]: option };
-        localStorage.setItem(`answers-${examId}`, JSON.stringify(newAnswers));
-        return newAnswers;
-      });
-    },
-    [examId]
-  );
+  const handleOptionChange = useCallback((questionId, option) => {
+    setAnswers(prev => {
+      const newAnswers = { ...prev, [questionId]: option };
+      localStorage.setItem(`answers-${examId}`, JSON.stringify(newAnswers));
+      return newAnswers;
+    });
+  }, [examId]);
 
   // ---------------------
   // Submit Exam
   // ---------------------
-  const handleSubmit = useCallback(
-    async (isAutoSubmit = false) => {
-      if (!studentId || questions.length === 0 || isSubmitting) return;
+  const handleSubmit = useCallback(async (isAutoSubmit = false) => {
+    if (!studentId || questions.length === 0 || isSubmitting) return;
 
-      setIsSubmitting(true);
-      setShowRecoveryModal(false);
+    setIsSubmitting(true);
+    setShowRecoveryModal(false);
 
-      const score = questions.reduce((total, q) => {
-        const selected = answers[q.QuestionId];
-        if (selected && selected === q[`Option${q.CorrectOption}`])
-          return total + marksPerQuestion;
-        return total;
-      }, 0);
+    const score = questions.reduce((total, q) => {
+      const selected = answers[q.QuestionId];
+      if (selected && selected === q[`Option${q.CorrectOption}`]) return total + marksPerQuestion;
+      return total;
+    }, 0);
 
-      try {
-        await submitExam({ studentId, examId, score, answers, isAutoSubmit });
-        localStorage.removeItem(`timeLeft-${examId}`);
-        localStorage.removeItem(`answers-${examId}`);
-        navigate(`/result`);
-      } catch (error) {
-        console.error("Submission Error:", error);
-        alert("Error submitting the exam. Please check your network.");
-        setIsSubmitting(false);
-      }
-    },
-    [
-      answers,
-      examId,
-      marksPerQuestion,
-      navigate,
-      questions,
-      studentId,
-      isSubmitting
-    ]
-  );
+    try {
+      await submitExam({ studentId, examId, score, answers, isAutoSubmit });
+      localStorage.removeItem(`timeLeft-${examId}`);
+      localStorage.removeItem(`answers-${examId}`);
+      navigate(`/result`);
+    } catch (error) {
+      console.error("Submission Error:", error);
+      alert("Error submitting the exam. Please check your network.");
+      setIsSubmitting(false);
+    }
+  }, [answers, examId, marksPerQuestion, navigate, questions, studentId, isSubmitting]);
 
   // ---------------------
-  // Timer Hook
+  // Timer Hook (dynamic)
   // ---------------------
-  const { timeLeft, timeDisplay } = useExamTimer(
-    examDurationSeconds,
-    examStarted,
-    handleSubmit
-  );
+  const { timeLeft, timeDisplay } = useExamTimer(examDurationSeconds, examStarted, handleSubmit);
 
   // ---------------------
   // Auth + Fetch Data
@@ -195,7 +159,7 @@ const TakeExam = () => {
     if (!token) return navigate("/login");
 
     try {
-      const decoded = jwtDecode(token); // ✅ Correct usage
+      const decoded = jwtDecode(token);
       if (!decoded.studentId) throw new Error("Invalid token");
       setStudentId(decoded.studentId);
 
@@ -220,8 +184,7 @@ const TakeExam = () => {
         }
 
         const totalQ = questionResponse.data.length;
-        const marksEach =
-          totalQ > 0 ? examResponse.data.TotalMarks / totalQ : 0;
+        const marksEach = totalQ > 0 ? examResponse.data.TotalMarks / totalQ : 0;
 
         setTotalMarks(examResponse.data.TotalMarks);
         setMarksPerQuestion(marksEach);
@@ -229,6 +192,7 @@ const TakeExam = () => {
 
         const durationSeconds = examResponse.data.DurationMinutes * 60;
         setExamDurationSeconds(durationSeconds);
+
       } catch {
         setError("Failed to fetch exam data.");
       } finally {
@@ -253,17 +217,14 @@ const TakeExam = () => {
   }, []);
 
   useEffect(() => {
-    const handleBlur = () => {
-      if (examStarted) setBlurCount((prev) => prev + 1);
-    };
+    const handleBlur = () => { if (examStarted) setBlurCount(prev => prev + 1); };
     window.addEventListener("blur", handleBlur);
     return () => window.removeEventListener("blur", handleBlur);
   }, [examStarted]);
 
   useEffect(() => {
     if (blurCount === 1) setWarning("⚠️ Warning: Do not switch tabs!");
-    else if (blurCount === 2)
-      setWarning("🚨 Second Warning: Last chance!");
+    else if (blurCount === 2) setWarning("🚨 Second Warning: Last chance!");
     else if (blurCount >= 3) {
       setWarning("⛔ Auto-Submission triggered: Too many tab switches!");
       handleSubmit(true);
@@ -274,12 +235,11 @@ const TakeExam = () => {
     const checkState = () => {
       if (!examStarted) return;
       const currentlyFullscreen = isFullScreen();
-      if ((online && !currentlyFullscreen) || !online)
-        setShowRecoveryModal(true);
+      if ((online && !currentlyFullscreen) || !online) setShowRecoveryModal(true);
       else setShowRecoveryModal(false);
 
       if (!currentlyFullscreen && examStarted && !showRecoveryModal) {
-        setFullscreenExitCount((prev) => prev + 1);
+        setFullscreenExitCount(prev => prev + 1);
         if (fullscreenExitCount === 0) setWarning("You exited fullscreen!");
         else handleSubmit(true);
       }
@@ -308,19 +268,16 @@ const TakeExam = () => {
   }, [examStarted, handleSubmit]);
 
   useEffect(() => {
-    const preventKeys = (e) => {
-      if (
-        ["F12", "ContextMenu"].includes(e.key) ||
-        (e.ctrlKey && ["u", "s", "i"].includes(e.key)) ||
-        (e.metaKey && ["u", "s", "i"].includes(e.key))
-      )
-        e.preventDefault();
+    const preventKeys = e => {
+      if (["F12", "ContextMenu"].includes(e.key) ||
+        (e.ctrlKey && ["u","s","i"].includes(e.key)) ||
+        (e.metaKey && ["u","s","i"].includes(e.key))) e.preventDefault();
     };
     window.addEventListener("keydown", preventKeys);
-    window.addEventListener("contextmenu", (e) => e.preventDefault());
+    window.addEventListener("contextmenu", e => e.preventDefault());
     return () => {
       window.removeEventListener("keydown", preventKeys);
-      window.removeEventListener("contextmenu", (e) => e.preventDefault());
+      window.removeEventListener("contextmenu", e => e.preventDefault());
     };
   }, []);
 
@@ -329,7 +286,7 @@ const TakeExam = () => {
   // ---------------------
   const startExam = () => {
     if (window.innerWidth < MIN_WIDTH || window.innerHeight < MIN_HEIGHT) {
-      setShowSizeModal(true);
+      setShowSizeModal(true); // ❌ Prevent start and show modal
       return;
     }
     enterFullScreen();
@@ -340,11 +297,10 @@ const TakeExam = () => {
   const currentQuestion = questions[currentQuestionIndex];
   const totalQuestions = questions.length;
   const answeredQuestions = Object.keys(answers).length;
-  const progress =
-    totalQuestions > 0 ? (answeredQuestions / totalQuestions) * 100 : 0;
+  const progress = totalQuestions > 0 ? (answeredQuestions / totalQuestions) * 100 : 0;
   const currentQuestionNumber = currentQuestionIndex + 1;
 
-  const getQuestionStatusVariant = (index) => {
+  const getQuestionStatusVariant = index => {
     const questionId = questions[index]?.QuestionId;
     if (index === currentQuestionIndex) return "primary";
     if (answers[questionId]) return "success";
@@ -356,255 +312,148 @@ const TakeExam = () => {
   // ---------------------
   if (isSubmitting) return <SubmittingOverlay />;
 
-  if (loading)
-    return (
-      <Container className="text-center mt-5">
-        <Spinner animation="border" variant="primary" />
-        <p className="mt-2">Loading exam data...</p>
-      </Container>
-    );
+  if (loading) return (
+    <Container className="text-center mt-5">
+      <Spinner animation="border" variant="primary" />
+      <p className="mt-2">Loading exam data...</p>
+    </Container>
+  );
 
-  if (error)
-    return (
-      <Container className="text-center mt-5">
-        <Alert variant="danger">{error}</Alert>
-        <Button variant="secondary" onClick={() => navigate("/")}>
-          Go Home
-        </Button>
-      </Container>
-    );
+  if (error) return (
+    <Container className="text-center mt-5">
+      <Alert variant="danger">{error}</Alert>
+      <Button variant="secondary" onClick={() => navigate("/")}>Go Home</Button>
+    </Container>
+  );
 
-  if (!examStarted)
-    return (
-      <Container className="text-center mt-5 p-4 bg-light rounded shadow-sm">
-        <h2 className="text-primary mb-4">Exam Rules & Instructions</h2>
-        <ul className="text-start mx-auto" style={{ maxWidth: "400px" }}>
-          <li>🔒 Fullscreen mode required.</li>
-          <li>❌ Do not switch tabs or minimize browser.</li>
-          <li>
-            💻 Minimum screen: {MIN_WIDTH}x{MIN_HEIGHT}
-          </li>
-          <li>⏱️ Duration: {Math.floor(examDurationSeconds / 60)} minutes</li>
-          <li>⚠️ Multiple violations = auto-submit.</li>
-        </ul>
-        <Button variant="primary" size="lg" onClick={startExam}>
-          Start Exam
-        </Button>
+  if (!examStarted) return (
+    <Container className="text-center mt-5 p-4 bg-light rounded shadow-sm">
+      <h2 className="text-primary mb-4">Exam Rules & Instructions</h2>
+      <ul className="text-start mx-auto" style={{ maxWidth: '400px' }}>
+        <li>🔒 Fullscreen mode required.</li>
+        <li>❌ Do not switch tabs or minimize browser.</li>
+        <li>💻 Minimum screen: {MIN_WIDTH}x{MIN_HEIGHT}</li>
+        <li>⏱️ Duration: {Math.floor(examDurationSeconds / 60)} minutes</li>
+        <li>⚠️ Multiple violations = auto-submit.</li>
+      </ul>
+      <Button variant="primary" size="lg" onClick={startExam}>Start Exam</Button>
 
-        {/* Small Screen Modal */}
-        <Modal
-          show={showSizeModal}
-          onHide={() => setShowSizeModal(false)}
-          centered
-        >
-          <Modal.Header closeButton className="bg-warning text-dark">
-            <Modal.Title>⚠️ Screen Too Small</Modal.Title>
-          </Modal.Header>
-          <Modal.Body>
-            <p>Your screen size is too small to start the exam.</p>
-            <p>
-              💻 Minimum required: {MIN_WIDTH}x{MIN_HEIGHT}
-            </p>
-            <p>Please use a larger screen or maximize your current window.</p>
-          </Modal.Body>
-          <Modal.Footer>
-            <Button variant="secondary" onClick={() => setShowSizeModal(false)}>
-              OK
-            </Button>
-          </Modal.Footer>
-        </Modal>
-      </Container>
-    );
+      {/* Small Screen Modal */}
+      <Modal show={showSizeModal} onHide={() => setShowSizeModal(false)} centered>
+        <Modal.Header closeButton className="bg-warning text-dark">
+          <Modal.Title>⚠️ Screen Too Small</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          <p>Your screen size is too small to start the exam.</p>
+          <p>💻 Minimum required: {MIN_WIDTH}x{MIN_HEIGHT}</p>
+          <p>Please use a larger screen or maximize your current window.</p>
+        </Modal.Body>
+        <Modal.Footer>
+          <Button variant="secondary" onClick={() => setShowSizeModal(false)}>OK</Button>
+        </Modal.Footer>
+      </Modal>
+    </Container>
+  );
 
   return (
-    <Container fluid className="take-exam-container py-4" style={{ minHeight: "100vh" }}>
-      <Row className="gx-4">
+    <Container fluid className="take-exam-container py-4" style={{ minHeight: '100vh' }}>
+     <Row className="gx-4">
+
         {/* Left Panel */}
         <Col md={3} className="mb-4">
-          <Card className="shadow-sm sticky-top" style={{ top: "20px" }}>
-            <Card.Header className="bg-primary text-white h5">
-              Exam Overview ⏱️
-            </Card.Header>
+          <Card className="shadow-sm sticky-top" style={{ top: '20px' }}>
+            <Card.Header className="bg-primary text-white h5">Exam Overview ⏱️</Card.Header>
             <Card.Body>
-              <h6 className={`text-${timeLeft < 300 ? "danger" : "success"} fw-bold`}>
+              <h6 className={`text-${timeLeft < 300 ? 'danger' : 'success'} fw-bold`}>
                 Time Remaining: {timeDisplay}
               </h6>
               <p>Total Marks: {totalMarks}</p>
-              <p>
-                Answered: {answeredQuestions}/{totalQuestions}
-              </p>
-              <ProgressBar
-                now={progress}
-                variant="info"
-                style={{ height: "10px", marginBottom: "5px" }}
-              />
+              <p>Answered: {answeredQuestions}/{totalQuestions}</p>
+              <ProgressBar now={progress} variant="info" style={{ height: '10px', marginBottom: '5px' }} />
               <small>{Math.round(progress)}% Completed</small>
               <hr />
               <h6>Question Navigation</h6>
-              <div
-                className="d-flex flex-wrap gap-2 question-navigation-panel"
-                style={{ maxHeight: "300px", overflowY: "auto", padding: "5px" }}
-              >
+              <div className="d-flex flex-wrap gap-2 question-navigation-panel" style={{ maxHeight: '300px', overflowY: 'auto', padding: '5px' }}>
                 {questions.map((q, index) => (
-                  <Button
-                    key={q.QuestionId}
-                    size="sm"
-                    variant={getQuestionStatusVariant(index)}
-                    onClick={() => setCurrentQuestionIndex(index)}
-                    style={{ width: "40px", height: "40px" }}
-                  >
-                    {index + 1}
-                  </Button>
+                  <Button key={q.QuestionId} size="sm" variant={getQuestionStatusVariant(index)}
+                    onClick={() => setCurrentQuestionIndex(index)} style={{ width: '40px', height: '40px' }}>{index+1}</Button>
                 ))}
               </div>
-              <Button
-                variant="success"
-                className="mt-4"
-                onClick={() => setShowSubmitModal(true)}
-              >
-                End & Submit Exam
-              </Button>
+              <Button variant="success" className="mt-4" onClick={() => setShowSubmitModal(true)}>End & Submit Exam</Button>
             </Card.Body>
           </Card>
         </Col>
 
         {/* Right Panel */}
         <Col md={9}>
-          {!online && (
-            <Alert variant="danger" className="sticky-top">
-              🔴 Offline! Check your connection.
-            </Alert>
-          )}
-          {warning && (
-            <Alert variant="warning" className="sticky-top">
-              {warning}
-            </Alert>
-          )}
+          {!online && <Alert variant="danger" className="sticky-top">🔴 Offline! Check your connection.</Alert>}
+          {warning && <Alert variant="warning" className="sticky-top">{warning}</Alert>}
 
           <Card className="shadow-lg p-4 mb-4 question-card">
             <Card.Header className="d-flex justify-content-between align-items-center">
-              <div>
-                Question {currentQuestionNumber} of {totalQuestions}
-              </div>
-              <span className="badge bg-secondary">
-                Marks: {marksPerQuestion.toFixed(2)}
-              </span>
+              <div>Question {currentQuestionNumber} of {totalQuestions}</div>
+              <span className="badge bg-secondary">Marks: {marksPerQuestion.toFixed(2)}</span>
             </Card.Header>
             <Card.Body>
               {currentQuestion ? (
                 <>
                   <Card.Title>{currentQuestion.QuestionText}</Card.Title>
                   <Form>
-                    {["A", "B", "C", "D", "E"].map((opt) => {
+                    {["A","B","C","D","E"].map(opt => {
                       const optionValue = currentQuestion[`Option${opt}`];
-                      return (
-                        optionValue && (
-                          <Form.Check
-                            key={opt}
-                            type="radio"
-                            id={`q-${currentQuestion.QuestionId}-opt-${opt}`}
-                            label={
-                              <span className="option-label">
-                                {opt}. {optionValue}
-                              </span>
-                            }
-                            name={`question-${currentQuestion.QuestionId}`}
-                            value={optionValue}
-                            onChange={() =>
-                              handleOptionChange(
-                                currentQuestion.QuestionId,
-                                optionValue
-                              )
-                            }
-                            checked={answers[currentQuestion.QuestionId] === optionValue}
-                            className="py-2 px-3 mb-2 rounded option-item"
-                          />
-                        )
+                      return optionValue && (
+                        <Form.Check
+                          key={opt}
+                          type="radio"
+                          id={`q-${currentQuestion.QuestionId}-opt-${opt}`}
+                          label={<span className="option-label">{opt}. {optionValue}</span>}
+                          name={`question-${currentQuestion.QuestionId}`}
+                          value={optionValue}
+                          onChange={() => handleOptionChange(currentQuestion.QuestionId, optionValue)}
+                          checked={answers[currentQuestion.QuestionId] === optionValue}
+                          className="py-2 px-3 mb-2 rounded option-item"
+                        />
                       );
                     })}
                   </Form>
                 </>
-              ) : (
-                <Alert variant="info">No question available.</Alert>
-              )}
+              ) : <Alert variant="info">No question available.</Alert>}
             </Card.Body>
             <Card.Footer className="d-flex justify-content-between">
-              <Button
-                variant="outline-secondary"
-                onClick={() => setCurrentQuestionIndex((prev) => prev - 1)}
-                disabled={currentQuestionIndex === 0}
-              >
-                Previous
-              </Button>
-              <Button
-                variant="primary"
-                onClick={() => setCurrentQuestionIndex((prev) => prev + 1)}
-                disabled={currentQuestionIndex === totalQuestions - 1}
-              >
-                Next
-              </Button>
+              <Button variant="outline-secondary" onClick={() => setCurrentQuestionIndex(prev => prev-1)} disabled={currentQuestionIndex===0}>Previous</Button>
+              <Button variant="primary" onClick={() => setCurrentQuestionIndex(prev => prev+1)} disabled={currentQuestionIndex===totalQuestions-1}>Next</Button>
             </Card.Footer>
           </Card>
         </Col>
       </Row>
 
-      {/* Submit Exam Modal */}
-      <Modal
-        show={showSubmitModal}
-        onHide={() => setShowSubmitModal(false)}
-        centered
-      >
-        <Modal.Header closeButton>
-          <Modal.Title>Confirm Submission</Modal.Title>
-        </Modal.Header>
+      {/* Submit Modal */}
+      <Modal show={showSubmitModal} onHide={() => setShowSubmitModal(false)} centered>
+        <Modal.Header closeButton className="bg-success text-white"><Modal.Title>Confirm Submission</Modal.Title></Modal.Header>
         <Modal.Body>
-          Are you sure you want to submit the exam? You cannot change your
-          answers after submission.
+          <p>You answered {answeredQuestions} of {totalQuestions} questions.</p>
+          <p className="fw-bold text-danger">Are you sure to submit now?</p>
         </Modal.Body>
         <Modal.Footer>
-          <Button variant="secondary" onClick={() => setShowSubmitModal(false)}>
-            Cancel
-          </Button>
-          <Button
-            variant="danger"
-            onClick={() => {
-              setShowSubmitModal(false);
-              handleSubmit();
-            }}
-          >
-            Submit Exam
-          </Button>
+          <Button variant="secondary" onClick={() => setShowSubmitModal(false)}>Cancel</Button>
+          <Button variant="success" onClick={() => { setShowSubmitModal(false); handleSubmit(false); }}>Submit</Button>
         </Modal.Footer>
       </Modal>
 
       {/* Recovery Modal */}
-      <Modal
-        show={showRecoveryModal}
-        onHide={() => setShowRecoveryModal(false)}
-        backdrop="static"
-        keyboard={false}
-        centered
-      >
-        <Modal.Header className="bg-danger text-white">
-          <Modal.Title>⚠️ Exam Suspended</Modal.Title>
-        </Modal.Header>
+      <Modal show={showRecoveryModal} backdrop="static" keyboard={false} centered>
+        <Modal.Header className="bg-danger text-white"><Modal.Title>🚨 Warning: Recovery Required</Modal.Title></Modal.Header>
         <Modal.Body>
-          <p>
-            Your exam is suspended due to:
-            <br />
-            • Lost internet connection OR
-            <br />
-            • Exited fullscreen mode
-          </p>
-          <p>Please fix the issue to continue. Failure will auto-submit exam.</p>
+          <p className="fw-bold text-danger">Connection lost or exited fullscreen.</p>
+          <p>Choose an action:</p>
+          <ul>
+            <li>Go Fullscreen to resume.</li>
+            <li>Submit Exam now.</li>
+          </ul>
         </Modal.Body>
-        <Modal.Footer>
-          <Button variant="primary" onClick={enterFullScreen}>
-            Re-enter Fullscreen
-          </Button>
-          <Button variant="secondary" onClick={() => setShowRecoveryModal(false)}>
-            Cancel
-          </Button>
+        <Modal.Footer className="justify-content-between">
+          <Button variant="outline-secondary" onClick={() => handleSubmit(true)}>Auto-Submit</Button>
+                    <Button variant="danger" onClick={enterFullScreen}>Go Fullscreen</Button>
         </Modal.Footer>
       </Modal>
     </Container>

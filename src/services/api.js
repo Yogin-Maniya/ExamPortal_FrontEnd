@@ -1,4 +1,5 @@
 import axios from "axios";
+
 const API_BASE_URL = process.env.REACT_APP_BASE_URL; // Replace with your actual API URL
 
 const api = axios.create({
@@ -71,15 +72,15 @@ export const fetchExams = async () => {
   return await api.get("/exam/AllExams");
 };
 
-// Get Exam Details
-export const getExamDetailsById = async (encryptedExamId) => {
-  return await api.get(`/exam?examId=${encodeURIComponent(encryptedExamId)}`);
+// ✅ Get Exam Details
+export const getExamDetailsById = async (examId) => {
+  return await api.get(`/exam/${examId}`);
 };
 
-export const getExamDetails = async (encryptedExamId) => {
-  return await api.get(`/questions?examId=${encodeURIComponent(encryptedExamId)}`);
+// ✅ Get Exam Question Details
+export const getExamDetails = async (examId) => {
+  return await api.get(`/questions/${examId}`);
 };
-
 
 // ✅ Submit Exam
 export const submitExam = async (submissionData) => {
