@@ -1,12 +1,24 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { registerUser } from "../services/api";
-import { FaUser, FaEnvelope, FaLock, FaGraduationCap, FaSpinner } from "react-icons/fa";
+import {
+  FaUser,
+  FaEnvelope,
+  FaLock,
+  FaGraduationCap,
+  FaSpinner,
+} from "react-icons/fa";
 
 const Register = () => {
-  const [user, setUser] = useState({ name: "", email: "", studentClass: "", password: "" });
+  const [user, setUser] = useState({
+    name: "",
+    email: "",
+    studentClass: "",
+    password: "",
+  });
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [showPopup, setShowPopup] = useState(false); // 🔹 popup state
   const navigate = useNavigate();
 
   const classes = [
@@ -16,7 +28,7 @@ const Register = () => {
     "B.Tech ME",
     "B.Tech CE",
     "BCA",
-    "BBA"
+    "BBA",
   ];
 
   const handleChange = (e) => {
@@ -33,28 +45,60 @@ const Register = () => {
     }
 
     setLoading(true);
+    setShowPopup(false);
 
     try {
       await registerUser(user);
       alert("Registration successful!");
       navigate("/login");
     } catch (error) {
-      setError(error.response?.data?.error || "Registration failed. Please try again.");
+      setError(
+        error.response?.data?.error || "Registration failed. Please try again."
+      );
     } finally {
       setLoading(false);
+      setShowPopup(false);
     }
   };
 
+  // 🔹 Show popup only if loading > 3.5s
+  useEffect(() => {
+    let timer;
+    if (loading) {
+      timer = setTimeout(() => setShowPopup(true), 3500);
+    }
+    return () => clearTimeout(timer);
+  }, [loading]);
+
   return (
     <div className="d-flex justify-content-center align-items-center vh-100 bg-light">
-      <div className="card shadow-lg p-4" style={{ maxWidth: "400px", width: "100%" }}>
+      {/* 🔹 Delayed Popup */}
+      {showPopup && (
+        <div
+          className="position-fixed top-0 start-0 w-100 h-100 d-flex justify-content-center align-items-center bg-dark bg-opacity-50"
+          style={{ zIndex: 1050 }}
+        >
+          <div className="bg-white rounded shadow p-4 text-center">
+            <FaSpinner className="fa-spin mb-3 text-primary" size={40} />
+           <h5 className="fw-bold">Server is starting… please wait</h5>
+          <p>It may take a few seconds if our server was inactive. Thank you for your patience!</p>
+          </div>
+        </div>
+      )}
+
+      <div
+        className="card shadow-lg p-4"
+        style={{ maxWidth: "400px", width: "100%" }}
+      >
         <h2 className="text-center text-primary mb-3">Create an Account</h2>
 
         {error && <p className="text-danger text-center">{error}</p>}
 
         <form onSubmit={handleSubmit} className="mt-3">
           <div className="mb-3 input-group">
-            <span className="input-group-text"><FaUser /></span>
+            <span className="input-group-text">
+              <FaUser />
+            </span>
             <input
               type="text"
               name="name"
@@ -67,7 +111,9 @@ const Register = () => {
           </div>
 
           <div className="mb-3 input-group">
-            <span className="input-group-text"><FaEnvelope /></span>
+            <span className="input-group-text">
+              <FaEnvelope />
+            </span>
             <input
               type="email"
               name="email"
@@ -80,7 +126,9 @@ const Register = () => {
           </div>
 
           <div className="mb-3 input-group">
-            <span className="input-group-text"><FaGraduationCap /></span>
+            <span className="input-group-text">
+              <FaGraduationCap />
+            </span>
             <select
               name="studentClass"
               value={user.studentClass}
@@ -90,13 +138,17 @@ const Register = () => {
             >
               <option value="">Select Class</option>
               {classes.map((cls, idx) => (
-                <option key={idx} value={cls}>{cls}</option>
+                <option key={idx} value={cls}>
+                  {cls}
+                </option>
               ))}
             </select>
           </div>
 
           <div className="mb-3 input-group">
-            <span className="input-group-text"><FaLock /></span>
+            <span className="input-group-text">
+              <FaLock />
+            </span>
             <input
               type="password"
               name="password"
@@ -108,19 +160,20 @@ const Register = () => {
             />
           </div>
 
-          <button type="submit" className="btn btn-primary w-100" disabled={loading}>
-            {loading ? (
-              <>
-                <FaSpinner className="spinner-border spinner-border-sm me-2" /> Registering...
-              </>
-            ) : (
-              "Register"
-            )}
+          <button
+            type="submit"
+            className="btn btn-primary w-100"
+            disabled={loading}
+          >
+            {loading ? "Registering..." : "Register"}
           </button>
         </form>
 
         <p className="text-center mt-3">
-          Already have an account? <a href="/login" className="text-primary">Login</a>
+          Already have an account?{" "}
+          <a href="/login" className="text-primary">
+            Login
+          </a>
         </p>
       </div>
     </div>

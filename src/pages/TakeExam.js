@@ -146,7 +146,7 @@ const TakeExam = () => {
   alert("Error submitting the exam. Please check your network.");
   setIsSubmitting(false);
 }
-  }, [answers, examId, marksPerQuestion, navigate, questions, studentId, isSubmitting]);
+  }, [answers, examId, marksPerQuestion, questions, studentId, isSubmitting]);
 
   // ---------------------
   // Timer Hook (dynamic)
