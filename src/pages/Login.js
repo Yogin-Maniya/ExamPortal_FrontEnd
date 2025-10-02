@@ -1,7 +1,8 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { loginUser } from "../services/api";
 import { useNavigate } from "react-router-dom";
 import { FaEye, FaEyeSlash } from "react-icons/fa";
+import { Modal, Spinner } from "react-bootstrap";
 import "bootstrap/dist/css/bootstrap.min.css";
 
 const Login = () => {
@@ -11,9 +12,11 @@ const Login = () => {
     role: "Student", // Default role
   });
   const [loading, setLoading] = useState(false);
+  const [showDelayedModal, setShowDelayedModal] = useState(false);
   const [error, setError] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const navigate = useNavigate();
+  const modalTimerRef = useRef(null);
 
   useEffect(() => {
     const checkTokenExpiry = () => {
@@ -35,15 +38,26 @@ const Login = () => {
     e.preventDefault();
     setLoading(true);
     setError("");
+    setShowDelayedModal(false);
+
+    // Set a timer to show modal after 3.5 seconds
+    modalTimerRef.current = setTimeout(() => {
+      setShowDelayedModal(true);
+    }, 3500);
 
     try {
       const response = await loginUser(credentials);
+
+      // Clear modal timer on success
+      clearTimeout(modalTimerRef.current);
+      setShowDelayedModal(false);
+
       if (response.token) {
         const expiryTime = new Date().getTime() + 3 * 60 * 60 * 1000; // 3 hours
         localStorage.setItem("authToken", response.token);
         localStorage.setItem("authTokenExpiry", expiryTime.toString());
 
-        // Redirect based on selected role:
+        // Redirect based on role
         if (credentials.role === "Student") {
           navigate("/User/Studentroute/login");
         } else if (credentials.role === "Teacher" || credentials.role === "Admin") {
@@ -53,7 +67,9 @@ const Login = () => {
         setError("Invalid credentials. Please try again.");
       }
     } catch (error) {
-      setError(error.response?.data?.error || "Login failed. Try again.");
+      clearTimeout(modalTimerRef.current);
+      setShowDelayedModal(false);
+      setError(error.response?.data?.error || "Login failed. Please try again.");
     }
 
     setLoading(false);
@@ -61,9 +77,19 @@ const Login = () => {
 
   return (
     <div className="d-flex justify-content-center align-items-center vh-100 bg-light">
+      {/* Delayed Loading Modal */}
+      <Modal show={showDelayedModal} backdrop="static" keyboard={false} centered>
+        <Modal.Body className="text-center">
+          <Spinner animation="border" variant="primary" className="mb-3" />
+          <h5 className="fw-bold">Server is starting… please wait</h5>
+          <p>It may take a few seconds if our server was inactive. Thank you for your patience!</p>
+        </Modal.Body>
+      </Modal>
+
       <div className="card p-4 shadow-lg rounded" style={{ width: "380px" }}>
         <h3 className="text-center mb-3 text-primary">Login</h3>
         {error && <div className="alert alert-danger text-center">{error}</div>}
+
         <form onSubmit={handleSubmit}>
           {/* Email Field */}
           <div className="mb-3">
@@ -100,52 +126,26 @@ const Login = () => {
             </div>
           </div>
 
-          {/* Role Selection using Radio Buttons */}
+          {/* Role Selection */}
           <div className="mb-3">
             <label className="form-label fw-bold">Role</label>
             <div className="d-flex gap-3">
-              <div className="form-check">
-                <input
-                  type="radio"
-                  id="student"
-                  name="role"
-                  value="Student"
-                  className="form-check-input"
-                  checked={credentials.role === "Student"}
-                  onChange={handleChange}
-                />
-                <label className="form-check-label" htmlFor="student">
-                  Student
-                </label>
-              </div>
-              <div className="form-check">
-                <input
-                  type="radio"
-                  id="teacher"
-                  name="role"
-                  value="Teacher"
-                  className="form-check-input"
-                  checked={credentials.role === "Teacher"}
-                  onChange={handleChange}
-                />
-                <label className="form-check-label" htmlFor="teacher">
-                  Teacher
-                </label>
-              </div>
-              <div className="form-check">
-                <input
-                  type="radio"
-                  id="admin"
-                  name="role"
-                  value="Admin"
-                  className="form-check-input"
-                  checked={credentials.role === "Admin"}
-                  onChange={handleChange}
-                />
-                <label className="form-check-label" htmlFor="admin">
-                  Admin
-                </label>
-              </div>
+              {["Student", "Teacher", "Admin"].map((role) => (
+                <div className="form-check" key={role}>
+                  <input
+                    type="radio"
+                    id={role.toLowerCase()}
+                    name="role"
+                    value={role}
+                    className="form-check-input"
+                    checked={credentials.role === role}
+                    onChange={handleChange}
+                  />
+                  <label className="form-check-label" htmlFor={role.toLowerCase()}>
+                    {role}
+                  </label>
+                </div>
+              ))}
             </div>
           </div>
 
