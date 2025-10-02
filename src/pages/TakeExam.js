@@ -135,15 +135,17 @@ const TakeExam = () => {
     }, 0);
 
     try {
-      await submitExam({ studentId, examId, score, answers, isAutoSubmit });
-      localStorage.removeItem(`timeLeft-${examId}`);
-      localStorage.removeItem(`answers-${examId}`);
-      navigate(`/result`, { replace: true });
-    } catch (error) {
-      console.error("Submission Error:", error);
-      alert("Error submitting the exam. Please check your network.");
-      setIsSubmitting(false);
-    }
+  await submitExam({ studentId, examId, score, answers, isAutoSubmit });
+  localStorage.removeItem(`timeLeft-${examId}`);
+  localStorage.removeItem(`answers-${examId}`);
+  
+  // ✅ Force clear all history
+  window.location.replace(`/result`); // Full reload, history cleared
+} catch (error) {
+  console.error("Submission Error:", error);
+  alert("Error submitting the exam. Please check your network.");
+  setIsSubmitting(false);
+}
   }, [answers, examId, marksPerQuestion, navigate, questions, studentId, isSubmitting]);
 
   // ---------------------
