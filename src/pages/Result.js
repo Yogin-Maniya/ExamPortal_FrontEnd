@@ -24,6 +24,14 @@ const Result = () => {
   const [filter, setFilter] = useState("all"); // all | passed | failed
 
   // -----------------------
+  // Force history clear
+  // -----------------------
+  useEffect(() => {
+    // Replace current page in history to remove previous pages
+    window.location.replace(window.location.href);
+  }, []);
+
+  // -----------------------
   // Exit Fullscreen on load
   // -----------------------
   useEffect(() => {
@@ -46,7 +54,7 @@ const Result = () => {
   useEffect(() => {
     const token = localStorage.getItem("authToken");
     if (!token) {
-      navigate("/login");
+      navigate("/login", { replace: true });
       return;
     }
     try {
@@ -226,7 +234,7 @@ const Result = () => {
             <div className="text-center mt-4">
               <Button
                 variant="outline-primary"
-                onClick={() => navigate("/dashboard")}
+                onClick={() => navigate("/dashboard", { replace: true })}
               >
                 Back to Dashboard
               </Button>
