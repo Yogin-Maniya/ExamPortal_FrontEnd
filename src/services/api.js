@@ -73,12 +73,11 @@ export const fetchExams = async () => {
 
 // Get Exam Details
 export const getExamDetailsById = async (encryptedExamId) => {
-  return await api.get(`/exam?examId=${encodeURIComponent(encryptedExamId)}`);
+  return await api.get(`/exam/${encodeURIComponent(encryptedExamId)}`);
 };
-
 // Get Exam Questions
 export const getExamDetails = async (encryptedExamId) => {
-  return await api.get(`/questions?examId=${encodeURIComponent(encryptedExamId)}`);
+  return await api.get(`/questions/${encodeURIComponent(encryptedExamId)}`);
 };
 
 
