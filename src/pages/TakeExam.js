@@ -138,7 +138,7 @@ const TakeExam = () => {
       await submitExam({ studentId, examId, score, answers, isAutoSubmit });
       localStorage.removeItem(`timeLeft-${examId}`);
       localStorage.removeItem(`answers-${examId}`);
-      navigate(`/result`);
+      navigate(`/result`, { replace: true });
     } catch (error) {
       console.error("Submission Error:", error);
       alert("Error submitting the exam. Please check your network.");
