@@ -12,8 +12,9 @@ import {
   Alert,
   Badge,
 } from "react-bootstrap";
-import {jwtDecode} from "jwt-decode"; // fixed import
+import { jwtDecode } from "jwt-decode"; // fixed import
 import "bootstrap/dist/css/bootstrap.min.css";
+import { encryptId } from "../utils/encryption";  // 🔑 Import encryption
 
 const Dashboard = () => {
   const navigate = useNavigate();
@@ -31,7 +32,7 @@ const Dashboard = () => {
     }
 
     try {
-      jwtDecode(token); // decode to ensure token is valid
+      jwtDecode(token);
     } catch (err) {
       console.error("Error decoding token:", err);
       navigate("/login");
@@ -119,7 +120,10 @@ const Dashboard = () => {
                       </Button>
                       <Button
                         variant="primary"
-                        onClick={() => navigate(`/take-exam/${exam.ExamId}`)}
+                        onClick={() => {
+                          const encryptedId = encryptId(exam.ExamId); // 🔒 Encrypt examId
+                          navigate(`/take-exam/${encodeURIComponent(encryptedId)}`);
+                        }}
                       >
                         Start
                       </Button>
