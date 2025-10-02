@@ -72,15 +72,16 @@ export const fetchExams = async () => {
   return await api.get("/exam/AllExams");
 };
 
-// ✅ Get Exam Details
+// Get Exam Details
 export const getExamDetailsById = async (encryptedExamId) => {
-  return await api.get(`/exam/${encryptedExamId}`);
+  return await api.get(`/exam?examId=${encodeURIComponent(encryptedExamId)}`);
 };
 
-// ✅ Get Exam Question Details
+// Get Exam Questions
 export const getExamDetails = async (encryptedExamId) => {
-  return await api.get(`/questions/${encryptedExamId}`);
+  return await api.get(`/questions?examId=${encodeURIComponent(encryptedExamId)}`);
 };
+
 
 // ✅ Submit Exam
 export const submitExam = async (submissionData) => {

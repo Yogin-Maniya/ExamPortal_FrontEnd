@@ -118,15 +118,15 @@ const Dashboard = () => {
                       >
                         Details
                       </Button>
-                      <Button
-                        variant="primary"
-                        onClick={() => {
-                          const encryptedId = encryptId(exam.ExamId); // 🔒 Encrypt examId
-                          navigate(`/take-exam/${encodeURIComponent(encryptedId)}`);
-                        }}
-                      >
-                        Start
-                      </Button>
+                    <Button
+  variant="primary"
+  onClick={() => {
+    const encryptedId = encryptId(exam.ExamId); // 🔒 Encrypt examId
+    navigate(`/take-exam?examId=${encodeURIComponent(encryptedId)}`);
+  }}
+>
+  Start
+</Button>
                     </div>
                   </Card.Body>
                 </Card>
