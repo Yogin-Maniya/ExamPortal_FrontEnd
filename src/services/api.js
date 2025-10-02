@@ -74,14 +74,12 @@ export const fetchExams = async () => {
 
 // ✅ Get Exam Details
 export const getExamDetailsById = async (encryptedExamId) => {
-  const examId = decryptId(decodeURIComponent(encryptedExamId)); // 🔑 decrypt the ID
-  return await api.get(`/exam/${examId}`);
+  return await api.get(`/exam/${encryptedExamId}`);
 };
 
 // ✅ Get Exam Question Details
 export const getExamDetails = async (encryptedExamId) => {
-  const examId = decryptId(decodeURIComponent(encryptedExamId)); // 🔑 decrypt the ID
-  return await api.get(`/questions/${examId}`);
+  return await api.get(`/questions/${encryptedExamId}`);
 };
 
 // ✅ Submit Exam
