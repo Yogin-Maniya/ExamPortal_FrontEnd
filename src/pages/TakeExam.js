@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { getExamDetailsById, getExamDetails, submitExam } from "../services/api";
-import jwtDecode from "jwt-decode"; // ✅ Correct import
+import {jwtDecode} from "jwt-decode"; // ✅ Correct import
 import {
   Container,
   Card,
