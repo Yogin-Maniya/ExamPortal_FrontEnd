@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { registerUser } from "../services/api";
+import './CSS/Register.css';
+
 import {
   FaUser,
   FaEnvelope,
@@ -74,17 +76,21 @@ const Register = () => {
     <div className="d-flex justify-content-center align-items-center vh-100 bg-light">
       {/* 🔹 Delayed Popup */}
       {showPopup && (
-        <div
-          className="position-fixed top-0 start-0 w-100 h-100 d-flex justify-content-center align-items-center bg-dark bg-opacity-50"
-          style={{ zIndex: 1050 }}
-        >
-          <div className="bg-white rounded shadow p-4 text-center">
-            <FaSpinner className="fa-spin mb-3 text-primary" size={40} />
-           <h5 className="fw-bold">Server is starting… please wait</h5>
-          <p>It may take a few seconds if our server was inactive. Thank you for your patience!</p>
-          </div>
-        </div>
-      )}
+  <div
+    className="position-fixed top-0 start-0 w-100 h-100 d-flex justify-content-center align-items-center bg-dark bg-opacity-50"
+    style={{ zIndex: 1050 }}
+  >
+    <div className="bg-white rounded shadow p-4 text-center">
+      <FaSpinner className="spin mb-3 text-primary" size={40} />
+      <h5 className="fw-bold">Server is starting… please wait</h5>
+      <p>
+        It may take a few seconds if our server was inactive. Thank you for your
+        patience!
+      </p>
+    </div>
+  </div>
+)}
+
 
       <div
         className="card shadow-lg p-4"
