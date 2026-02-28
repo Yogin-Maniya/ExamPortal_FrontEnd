@@ -1,134 +1,154 @@
-// AdminFeedbackPage.js
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import api from "../../services/api";
-import { Table, Spinner, Alert, Container, Card, Button } from "react-bootstrap";
-import { FaComments, FaTrash } from "react-icons/fa";
+import { Table, Spinner, Alert, Container, Card, Button, Badge } from "react-bootstrap";
+import { FaComments, FaTrash, FaUserCircle, FaClock } from "react-icons/fa";
+import AdvancedPopup from "../../components/AdvancedPopup";
 
 const AdminFeedbackPage = () => {
   const [feedbacks, setFeedbacks] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
-  const [deletingId, setDeletingId] = useState(null); // Track which feedback is deleting
-
-
-
-  const getTokenHeader = () => ({
-    Authorization: `Bearer ${localStorage.getItem("authToken")}`,
+  const [deletingId, setDeletingId] = useState(null);
+  const [popup, setPopup] = useState({
+    show: false,
+    type: "info",
+    title: "",
+    message: "",
+    confirmText: "OK",
+    cancelText: "Cancel",
+    showCancel: false,
+    loading: false,
+    onConfirm: null
   });
 
-  // Fetch all feedback
-// top of your component
-const fetchFeedbacks = React.useCallback(async () => {
-  setLoading(true);
-  setError("");
-  try {
-    const response = await api.get("/admin/feedback", {
-      headers: getTokenHeader(),
-    });
-    setFeedbacks(response.data || []);
-  } catch (err) {
-    setError(err.response?.data?.error || "Failed to fetch feedback. Please try again.");
-  }
-  setLoading(false);
-}, []); // no deps
+  const fetchFeedbacks = useCallback(async () => {
+    setLoading(true);
+    setError("");
+    try {
+      const response = await api.get("/admin/feedback");
+      setFeedbacks(response.data || []);
+    } catch (err) {
+      setError("Failed to fetch feedback logs.");
+    } finally {
+      setLoading(false);
+    }
+  }, []);
 
-useEffect(() => {
-  fetchFeedbacks();
-}, [fetchFeedbacks]);
+  useEffect(() => { fetchFeedbacks(); }, [fetchFeedbacks]);
 
-
-  // Delete feedback
   const handleDelete = async (feedbackId) => {
-    if (!window.confirm("Are you sure you want to delete this feedback?")) return;
-
     setDeletingId(feedbackId);
     try {
-      await api.delete(`/admin/feedback/${feedbackId}`, {
-        headers: getTokenHeader(),
+      await api.delete(`/admin/feedback/${feedbackId}`);
+      setFeedbacks(prev => prev.filter(fb => fb.FeedbackId !== feedbackId));
+      setPopup({
+        show: true,
+        type: "success",
+        title: "Deleted",
+        message: "Feedback deleted successfully.",
+        confirmText: "OK",
+        cancelText: "Cancel",
+        showCancel: false,
+        loading: false,
+        onConfirm: null
       });
-
-      // Remove from UI
-      setFeedbacks((prev) =>
-        prev.filter((fb) => fb.FeedbackId !== feedbackId)
-      );
     } catch (err) {
-      alert(
-        err.response?.data?.error ||
-          "Failed to delete feedback. Please try again."
-      );
+      setPopup({
+        show: true,
+        type: "error",
+        title: "Delete Failed",
+        message: "Delete failed.",
+        confirmText: "Close",
+        cancelText: "Cancel",
+        showCancel: false,
+        loading: false,
+        onConfirm: null
+      });
+    } finally {
+      setDeletingId(null);
     }
-    setDeletingId(null);
+  };
+
+  const closePopup = () => {
+    setPopup((prev) => (prev.loading ? prev : { ...prev, show: false }));
   };
 
   return (
     <div className="bg-light min-vh-100 py-5">
       <Container>
-        <Card className="shadow-lg border-0">
-          <Card.Header className="bg-primary text-white">
-            <h4 className="mb-0">
-              <FaComments className="me-2" /> All Feedback from Students
-            </h4>
-          </Card.Header>
-          <Card.Body className="p-0">
-            {loading && (
-              <div className="text-center p-4">
-                <Spinner animation="border" variant="primary" />
-              </div>
-            )}
+        <div className="d-flex align-items-center gap-3 mb-4">
+          <div className="bg-primary text-white p-3 rounded-3"><FaComments size={24}/></div>
+          <h3 className="fw-bold mb-0">Student Feedback Hub</h3>
+        </div>
 
-            {error && (
-              <Alert variant="danger" className="m-3 text-center">
-                {error}
-              </Alert>
-            )}
+        {error && <Alert variant="danger" className="rounded-4 text-center shadow-sm">{error}</Alert>}
 
-            {!loading && !error && feedbacks.length === 0 && (
-              <Alert variant="info" className="m-3 text-center">
-                No feedback available yet.
-              </Alert>
-            )}
-
-            {!loading && feedbacks.length > 0 && (
-              <div className="table-responsive">
-                <Table hover className="mb-0 align-middle">
-                  <thead className="table-light">
-                    <tr>
-                      <th>Feedback ID</th>
-                      <th>Student ID</th>
-                      <th>Message</th>
-                      <th>Created At</th>
-                      <th className="text-center">Action</th>
+        <Card className="border-0 shadow-sm rounded-4 overflow-hidden">
+          <div className="table-responsive">
+            <Table hover className="align-middle mb-0">
+              <thead className="bg-white border-bottom">
+                <tr>
+                  <th className="px-4 py-3 text-muted">USER ID</th>
+                  <th className="py-3 text-muted">MESSAGE</th>
+                  <th className="py-3 text-muted">POSTED ON</th>
+                  <th className="py-3 text-center text-muted px-4">ACTION</th>
+                </tr>
+              </thead>
+              <tbody>
+                {loading ? (
+                   <tr><td colSpan="4" className="text-center py-5"><Spinner animation="border" variant="primary" /></td></tr>
+                ) : feedbacks.length === 0 ? (
+                   <tr><td colSpan="4" className="text-center py-5 text-muted">No student feedback available.</td></tr>
+                ) : (
+                  feedbacks.map((fb) => (
+                    <tr key={fb.FeedbackId}>
+                      <td className="px-4"><Badge bg="light" className="text-dark border p-2"><FaUserCircle className="me-1"/> Student #{fb.StudentId}</Badge></td>
+                      <td className="py-3" style={{ maxWidth: "400px" }}>
+                        <div className="p-3 bg-light rounded-3 text-dark">{fb.Message}</div>
+                      </td>
+                      <td className="text-muted small"><FaClock className="me-1"/> {new Date(fb.CreatedAt).toLocaleString()}</td>
+                      <td className="text-center px-4">
+                        <Button
+                          variant="link"
+                          className="text-danger p-0"
+                          onClick={() =>
+                            setPopup({
+                              show: true,
+                              type: "confirm",
+                              title: "Delete Feedback",
+                              message: "Permanently delete this feedback?",
+                              confirmText: "Delete",
+                              cancelText: "Cancel",
+                              showCancel: true,
+                              loading: false,
+                              onConfirm: () => handleDelete(fb.FeedbackId)
+                            })
+                          }
+                          disabled={deletingId === fb.FeedbackId}
+                        >
+                          {deletingId === fb.FeedbackId ? <Spinner size="sm" /> : <FaTrash size={18} />}
+                        </Button>
+                      </td>
                     </tr>
-                  </thead>
-                  <tbody>
-                    {feedbacks.map((fb) => (
-                      <tr key={fb.FeedbackId}>
-                        <td>{fb.FeedbackId}</td>
-                        <td>{fb.StudentId}</td>
-                        <td>{fb.Message}</td>
-                        <td>{new Date(fb.CreatedAt).toLocaleString()}</td>
-                        <td className="text-center">
-                          <Button
-                            variant="danger"
-                            size="sm"
-                            onClick={() => handleDelete(fb.FeedbackId)}
-                            disabled={deletingId === fb.FeedbackId}
-                          >
-                            {deletingId === fb.FeedbackId ? (
-                              <Spinner animation="border" size="sm" />
-                            ) : (
-                              <FaTrash />
-                            )}
-                          </Button>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </Table>
-              </div>
-            )}
-          </Card.Body>
+                  ))
+                )}
+              </tbody>
+            </Table>
+          </div>
         </Card>
+
+        <AdvancedPopup
+          show={popup.show}
+          type={popup.type}
+          title={popup.title}
+          message={popup.message}
+          onClose={closePopup}
+          onConfirm={popup.onConfirm || closePopup}
+          confirmText={popup.confirmText}
+          cancelText={popup.cancelText}
+          showCancel={popup.showCancel}
+          loading={popup.loading}
+        />
       </Container>
     </div>
   );

@@ -1,390 +1,272 @@
-// TeacherDashboard.js
 import React, { useState, useEffect, useCallback } from "react";
 import api from "../../services/api";
 import { useNavigate } from "react-router-dom";
-import {
-  Spinner,
-  Alert,
-  Container,
-  Row,
-  Col,
-  Card,
-  Button,
-  Table,
-  Modal,
-  Badge,
-  ListGroup,
-} from "react-bootstrap";
-import {
-  FaPlus,
-  FaChalkboardTeacher,
-  FaRegListAlt,
-  FaEdit,
-  FaEye,
-  FaUsers,
-  FaInfoCircle,
-  FaClock,
-  FaHashtag,
-  FaCalendarAlt,
-  FaTrash,
-} from "react-icons/fa";
-import CreateExamModal from "../../components/CreateExamModal";
+import { jwtDecode } from "jwt-decode";
+import { Spinner,Container, Card, Button, Table, Modal, Badge, Form, Row, Col } from "react-bootstrap";
+import { FaPlus, FaChalkboardTeacher, FaRegListAlt, FaEdit, FaEye, FaInfoCircle, FaTrash } from "react-icons/fa";
+import AdvancedPopup from "../../components/AdvancedPopup";
 
 const TeacherDashboard = () => {
-  const [exams, setExams] = useState([]);
-  const [selectedExamResults, setSelectedExamResults] = useState(null);
-  const [selectedExamDetails, setSelectedExamDetails] = useState(null);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
-  const [showCreateExamModal, setShowCreateExamModal] = useState(false);
-  const [showResultsModal, setShowResultsModal] = useState(false);
-  const [showDetailsModal, setShowDetailsModal] = useState(false);
   const navigate = useNavigate();
-
-
-
-  const getTokenHeader = () => ({
-    Authorization: `Bearer ${localStorage.getItem("authToken")}`,
+  const [exams, setExams] = useState([]);
+  const [classes, setClasses] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [, setError] = useState("");
+  const [showCreateModal, setShowCreateModal] = useState(false);
+  const [popup, setPopup] = useState({
+    show: false,
+    type: "info",
+    title: "",
+    message: "",
+    confirmText: "OK",
+    cancelText: "Cancel",
+    showCancel: false,
+    loading: false,
+    onConfirm: null
   });
 
-  // Fetch dashboard data
+  // Form State
+  const [examName, setExamName] = useState("");
+  const [className, setClassName] = useState("");
+  const [totalMarks, setTotalMarks] = useState("");
+  const [durationMinutes, setDurationMinutes] = useState("");
+  const [startTime, setStartTime] = useState("");
+
   const fetchDashboardData = useCallback(async () => {
     setLoading(true);
-    setError("");
     try {
-      const response = await api.get(`/admin/admins/dashboard`, {
-        headers: getTokenHeader(),
-      });
-      setExams(response.data.exams || []);
-    } catch (err) {
-      if (err.response?.status === 401 || err.response?.status === 403) {
-        navigate("/login");
-        return;
-      }
-      setError(err.response?.data?.error || "Failed to load dashboard data.");
-    }
-    setLoading(false);
-  }, [navigate]);
-
-  useEffect(() => {
-    const token = localStorage.getItem("authToken");
-    if (!token) {
-      navigate("/login");
-      return;
-    }
-    fetchDashboardData();
-  }, [navigate, fetchDashboardData]);
-
-  // Fetch exam results
-  const fetchExamResults = useCallback(async (examId, examName) => {
-    setLoading(true);
-    setError("");
-    setSelectedExamResults(null);
-    try {
-      const response = await api.get(`/admin/admins/exam-results/${examId}`, {
-        headers: getTokenHeader(),
-      });
-      setSelectedExamResults({
-        examName,
-        results: response.data.examResults || [],
-      });
-      setShowResultsModal(true);
-    } catch (err) {
-      setError(err.response?.data?.error || "Failed to load exam results.");
-    }
-    setLoading(false);
-  }, []);
-
-  // Fetch exam details
-  const fetchExamDetails = useCallback(async (examId) => {
-    setLoading(true);
-    setError("");
-    try {
-      const response = await api.get(`/admin/exams/${examId}`, {
-        headers: getTokenHeader(),
-      });
-      setSelectedExamDetails(response.data);
-      setShowDetailsModal(true);
-    } catch (err) {
-      setError(err.response?.data?.error || "Failed to load exam details.");
-    }
-    setLoading(false);
-  }, []);
-
-  // Delete exam
-  const deleteExam = async (examId) => {
-    if (!window.confirm("Are you sure you want to delete this exam? This action cannot be undone.")) return;
-    try {
-      setLoading(true);
-      await api.delete(`/admin/exams/${examId}`, { headers: getTokenHeader() });
-      setExams(exams.filter((e) => e.ExamId !== examId));
-      alert("Exam deleted successfully!");
-    } catch (err) {
-      setError(err.response?.data?.error || "Failed to delete exam.");
+      const res = await api.get("/admin/admins/dashboard");
+      setExams(res.data.exams || []);
+    } catch {
+      setError("Failed to sync dashboard data.");
     } finally {
       setLoading(false);
     }
+  }, []);
+
+  const fetchClasses = async () => {
+    try {
+      const res = await api.get("/exam/classes");
+      setClasses(res.data || []);
+    } catch {}
   };
 
-  // Handle exam creation
-  const handleExamCreated = (examId) => {
-    setShowCreateExamModal(false);
+  useEffect(() => {
     fetchDashboardData();
-    navigate(`/create-exam/${examId}`);
+    fetchClasses();
+  }, [fetchDashboardData]);
+
+  const createExam = async (e) => {
+    e.preventDefault();
+    try {
+      const token = localStorage.getItem("authToken");
+      const decoded = jwtDecode(token);
+      const start = new Date(startTime);
+      const end = new Date(start.getTime() + Number(durationMinutes) * 60000);
+
+      const res = await api.post("/admin/exams/create", {
+        examName, className,
+        totalMarks: Number(totalMarks),
+        durationMinutes: Number(durationMinutes),
+        startTime: start,
+        endTime: end,
+        adminId: decoded.adminId
+      });
+
+      setShowCreateModal(false);
+      navigate(`/teacher/create-exam/${res.data.ExamId}`);
+    } catch (err) {
+      setPopup({
+        show: true,
+        type: "error",
+        title: "Create Failed",
+        message: err.response?.data?.error || "Error creating exam session.",
+        confirmText: "Close",
+        cancelText: "Cancel",
+        showCancel: false,
+        loading: false,
+        onConfirm: null
+      });
+    }
   };
 
-  const StatusDisplay = ({ isLoading, isError }) => {
-    if (isLoading)
-      return (
-        <div className="text-center p-5">
-          <Spinner animation="border" variant="primary" className="mb-3" />
-          <p className="text-muted">Loading dashboard data...</p>
-        </div>
-      );
-    if (isError) return <Alert variant="danger">{isError}</Alert>;
-    return null;
+  const closePopup = () => {
+    setPopup((prev) => (prev.loading ? prev : { ...prev, show: false }));
+  };
+
+  const deleteExam = async (examId) => {
+    try {
+      setPopup((prev) => ({ ...prev, loading: true }));
+      await api.delete(`/admin/exams/${examId}`);
+      await fetchDashboardData();
+      setPopup({
+        show: true,
+        type: "success",
+        title: "Deleted",
+        message: "Exam deleted successfully.",
+        confirmText: "OK",
+        cancelText: "Cancel",
+        showCancel: false,
+        loading: false,
+        onConfirm: null
+      });
+    } catch (err) {
+      setPopup({
+        show: true,
+        type: "error",
+        title: "Delete Failed",
+        message: err.response?.data?.error || "Unable to delete exam.",
+        confirmText: "Close",
+        cancelText: "Cancel",
+        showCancel: false,
+        loading: false,
+        onConfirm: null
+      });
+    }
   };
 
   return (
-    <div className="bg-light min-vh-100 pb-5">
-      {/* Header */}
-      <div className="bg-primary text-white p-5 mb-5 shadow-sm rounded-bottom">
-        <Container>
-          <h1 className="display-5 fw-light mb-2">
-            <FaChalkboardTeacher className="me-3" /> Teacher Dashboard
-          </h1>
-          <p className="lead">
-            Manage exams, monitor student submissions, and analyze results.
-          </p>
-          <Button
-            variant="light"
-            size="lg"
-            className="mt-3 fw-bold shadow-sm text-primary"
-            onClick={() => setShowCreateExamModal(true)}
-          >
-            <FaPlus className="me-2" /> Create New Exam
+    <div className="bg-light min-vh-100">
+      <div className="bg-white border-bottom py-4 shadow-sm mb-4">
+        <Container className="d-flex justify-content-between align-items-center">
+          <div className="d-flex align-items-center gap-3">
+            <div className="bg-primary text-white p-3 rounded-circle shadow-sm">
+              <FaChalkboardTeacher size={24} />
+            </div>
+            <div>
+              <h3 className="fw-bold mb-0 text-dark">Teacher Dashboard</h3>
+              <p className="text-muted small mb-0">Management Center for Academic Exams</p>
+            </div>
+          </div>
+          <Button onClick={() => setShowCreateModal(true)} className="rounded-pill px-4 shadow-sm d-flex align-items-center gap-2 py-2">
+            <FaPlus /> <span>New Exam Session</span>
           </Button>
         </Container>
       </div>
 
       <Container>
-        <StatusDisplay isLoading={loading} isError={error} />
-
-        <Row className="g-4">
-          <Col lg={12}>
-            <Card className="shadow-lg border-0">
-              <Card.Header className="bg-primary text-white">
-                <h4 className="mb-0">
-                  <FaRegListAlt className="me-2" /> All Exams
-                </h4>
-              </Card.Header>
-              <Card.Body className="p-0">
-                {exams.length === 0 && !loading ? (
-                  <Alert variant="info" className="m-3 text-center">
-                    No exams found. Use the button above to create one!
-                  </Alert>
-                ) : (
-                  <div className="table-responsive">
-                    <Table hover className="mb-0 align-middle">
-                      <thead className="table-light">
-                        <tr>
-                          <th>Exam Name</th>
-                          <th className="text-center">Class</th>
-                          <th className="text-center">Submissions</th>
-                          <th className="text-end">Actions</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {exams.map((exam) => (
-                          <tr key={exam.ExamId}>
-                            <td>{exam.ExamName}</td>
-                            <td className="text-center">
-                              <Badge bg="secondary">{exam.Class}</Badge>
-                            </td>
-                            <td className="text-center">
-                              <Badge bg="info" text="dark">
-                                {exam.submissionCount || 0}/
-                                {exam.totalStudents || "N/A"}
-                              </Badge>
-                            </td>
-                            <td className="text-end">
-                              <Button
-                                variant="outline-primary"
-                                size="sm"
-                                className="me-2"
-                                title="Edit Exam Questions"
-                                onClick={() =>
-                                  navigate(`/edit-exam/${exam.ExamId}`)
-                                }
-                              >
-                                <FaEdit />
-                              </Button>
-                              <Button
-                                variant="outline-secondary"
-                                size="sm"
-                                className="me-2"
-                                title="View Exam Details"
-                                onClick={() => fetchExamDetails(exam.ExamId)}
-                              >
-                                <FaInfoCircle />
-                              </Button>
-                              <Button
-                                variant="success"
-                                size="sm"
-                                className="me-2"
-                                title="View Student Results"
-                                onClick={() =>
-                                  fetchExamResults(exam.ExamId, exam.ExamName)
-                                }
-                              >
-                                <FaEye /> Results
-                              </Button>
-                              {/* Delete Button */}
-                              <Button
-                                variant="outline-danger"
-                                size="sm"
-                                title="Delete Exam"
-                                onClick={() => deleteExam(exam.ExamId)}
-                              >
-                                <FaTrash />
-                              </Button>
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </Table>
-                  </div>
-                )}
-              </Card.Body>
-            </Card>
-          </Col>
-        </Row>
-      </Container>
-
-      {/* Create Exam Modal */}
-      {showCreateExamModal && (
-        <CreateExamModal
-          onClose={() => setShowCreateExamModal(false)}
-          onExamCreated={handleExamCreated}
-        />
-      )}
-
-      {/* Results Modal */}
-      <Modal
-        show={showResultsModal}
-        onHide={() => setShowResultsModal(false)}
-        size="lg"
-        centered
-      >
-        <Modal.Header closeButton className="bg-success text-white">
-          <Modal.Title>
-            <FaUsers className="me-2" /> Results for:{" "}
-            {selectedExamResults?.examName}
-          </Modal.Title>
-        </Modal.Header>
-        <Modal.Body className="p-0">
-          {selectedExamResults?.results.length === 0 ? (
-            <Alert variant="warning" className="text-center m-3">
-              No submissions yet for this exam.
-            </Alert>
-          ) : (
-            <div className="table-responsive">
-              <Table hover className="mb-0">
+        {loading ? <div className="text-center py-5"><Spinner animation="border" variant="primary" /></div> : (
+          <Card className="border-0 shadow-sm rounded-4">
+            <Card.Header className="bg-white border-0 pt-4 px-4 d-flex justify-content-between">
+               <h5 className="fw-bold"><FaRegListAlt className="me-2 text-primary" /> Active Exams</h5>
+               <Badge bg="primary" pill className="p-2 px-3">{exams.length} Total</Badge>
+            </Card.Header>
+            <Card.Body className="p-0">
+              <Table hover responsive className="align-middle mb-0 mt-2">
                 <thead className="table-light">
                   <tr>
-                    <th>Student Name</th>
-                    <th className="text-center">Score</th>
-                    <th>Submitted At</th>
+                    <th className="px-4 py-3">Exam Module Name</th>
+                    <th className="py-3">Grade/Class</th>
+                    <th className="py-3 text-center px-4">Management Controls</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {selectedExamResults?.results.map((result, idx) => (
-                    <tr key={idx}>
-                      <td>{result.StudentName}</td>
-                      <td className="text-center">
-                        <Badge
-                          pill
-                          bg={result.Score > 50 ? "success" : "warning"}
-                          text={result.Score > 50 ? "white" : "dark"}
-                        >
-                          {result.Score}
-                        </Badge>
-                      </td>
-                      <td>
-                        {new Date(result.SubmittedAt).toLocaleString()}
+                  {exams.map(exam => (
+                    <tr key={exam.ExamId}>
+                      <td className="px-4 fw-bold text-dark">{exam.ExamName}</td>
+                      <td><Badge bg="info" pill className="px-3 text-white">Class {exam.Class}</Badge></td>
+                      <td className="text-center px-4">
+                        <div className="d-flex gap-2 justify-content-center">
+                          <Button variant="light" size="sm" title="Edit Questions" className="text-primary border shadow-sm" onClick={() => navigate(`/teacher/exam/${exam.ExamId}/edit`)}>
+                            <FaEdit />
+                          </Button>
+                          <Button variant="light" size="sm" title="Specifications" className="text-info border shadow-sm" onClick={() => navigate(`/teacher/exam/${exam.ExamId}/details`)}>
+                            <FaInfoCircle />
+                          </Button>
+                          <Button variant="light" size="sm" title="Results" className="text-success border shadow-sm" onClick={() => navigate(`/teacher/exam/${exam.ExamId}/results`)}>
+                            <FaEye />
+                          </Button>
+                          <Button
+                            variant="light"
+                            size="sm"
+                            title="Delete"
+                            className="text-danger border shadow-sm"
+                            onClick={() =>
+                              setPopup({
+                                show: true,
+                                type: "confirm",
+                                title: "Delete Exam",
+                                message: "This will delete exam and student results. Continue?",
+                                confirmText: "Delete",
+                                cancelText: "Cancel",
+                                showCancel: true,
+                                loading: false,
+                                onConfirm: () => deleteExam(exam.ExamId)
+                              })
+                            }
+                          >
+                            <FaTrash />
+                          </Button>
+                        </div>
                       </td>
                     </tr>
                   ))}
                 </tbody>
               </Table>
-            </div>
-          )}
-        </Modal.Body>
-        <Modal.Footer>
-          <Button
-            variant="secondary"
-            onClick={() => setShowResultsModal(false)}
-          >
-            Close
-          </Button>
-        </Modal.Footer>
+            </Card.Body>
+          </Card>
+        )}
+      </Container>
+
+      {/* CREATE MODAL */}
+      <Modal show={showCreateModal} onHide={() => setShowCreateModal(false)} centered contentClassName="border-0 rounded-4 shadow-lg overflow-hidden">
+        <Modal.Header closeButton className="bg-primary text-white py-3 border-0">
+          <Modal.Title className="fw-bold"><FaPlus className="me-2"/> Initialize New Exam</Modal.Title>
+        </Modal.Header>
+        <Form onSubmit={createExam}>
+          <Modal.Body className="p-4">
+            <Form.Group className="mb-3">
+              <Form.Label className="small fw-bold">Exam Name</Form.Label>
+              <Form.Control required placeholder="e.g. Midterm 2024" value={examName} onChange={e => setExamName(e.target.value)} className="bg-light border-0 py-2 shadow-none" />
+            </Form.Group>
+            
+            <Form.Group className="mb-3">
+              <Form.Label className="small fw-bold">Select Class</Form.Label>
+              <Form.Select required value={className} onChange={e => setClassName(e.target.value)} className="bg-light border-0 py-2 shadow-none">
+                <option value="">Choose...</option>
+                {classes.map((c,i)=>(<option key={i} value={c}>{c}</option>))}
+              </Form.Select>
+            </Form.Group>
+
+            <Row>
+              <Col md={6}>
+                <Form.Group className="mb-3">
+                  <Form.Label className="small fw-bold">Total Marks</Form.Label>
+                  <Form.Control type="number" required value={totalMarks} onChange={e => setTotalMarks(e.target.value)} className="bg-light border-0 py-2 shadow-none" />
+                </Form.Group>
+              </Col>
+              <Col md={6}>
+                <Form.Group className="mb-3">
+                  <Form.Label className="small fw-bold">Duration (Mins)</Form.Label>
+                  <Form.Control type="number" required value={durationMinutes} onChange={e => setDurationMinutes(e.target.value)} className="bg-light border-0 py-2 shadow-none" />
+                </Form.Group>
+              </Col>
+            </Row>
+
+            <Form.Group className="mb-2">
+              <Form.Label className="small fw-bold">Schedule Start Time</Form.Label>
+              <Form.Control type="datetime-local" required value={startTime} onChange={e => setStartTime(e.target.value)} className="bg-light border-0 py-2 shadow-none" />
+            </Form.Group>
+          </Modal.Body>
+          <Modal.Footer className="bg-light border-0 px-4 py-3">
+            <Button variant="secondary" className="rounded-pill px-4" onClick={() => setShowCreateModal(false)}>Cancel</Button>
+            <Button type="submit" variant="primary" className="rounded-pill px-4 fw-bold">Launch Session</Button>
+          </Modal.Footer>
+        </Form>
       </Modal>
 
-      {/* Detail Modal */}
-      <Modal
-        show={showDetailsModal}
-        onHide={() => setShowDetailsModal(false)}
-        size="md"
-        centered
-      >
-        <Modal.Header closeButton className="bg-secondary text-white">
-          <Modal.Title>
-            <FaInfoCircle className="me-2" /> Exam Details
-          </Modal.Title>
-        </Modal.Header>
-        <Modal.Body>
-          {selectedExamDetails ? (
-            <ListGroup variant="flush">
-              <ListGroup.Item>
-                <strong>Exam Name:</strong> {selectedExamDetails.ExamName}
-              </ListGroup.Item>
-              <ListGroup.Item>
-                <FaHashtag className="me-2 text-muted" /> <strong>Class:</strong>{" "}
-                {selectedExamDetails.Class}
-              </ListGroup.Item>
-              <ListGroup.Item>
-                <strong>Total Marks:</strong>{" "}
-                <Badge bg="primary">{selectedExamDetails.TotalMarks}</Badge>
-              </ListGroup.Item>
-              <ListGroup.Item>
-                <FaClock className="me-2 text-muted" /> <strong>Duration:</strong>{" "}
-                {selectedExamDetails.DurationMinutes} mins
-              </ListGroup.Item>
-              <ListGroup.Item>
-                <FaCalendarAlt className="me-2 text-muted" /> <strong>Start Time:</strong>{" "}
-                {new Date(selectedExamDetails.StartTime).toLocaleString()}
-              </ListGroup.Item>
-              <ListGroup.Item>
-                <FaCalendarAlt className="me-2 text-muted" /> <strong>End Time:</strong>{" "}
-                {new Date(selectedExamDetails.EndTime).toLocaleString()}
-              </ListGroup.Item>
-              <ListGroup.Item>
-                <strong>Created:</strong>{" "}
-                {new Date(selectedExamDetails.CreatedAt).toLocaleDateString()}
-              </ListGroup.Item>
-            </ListGroup>
-          ) : (
-            <Alert variant="info" className="text-center">
-              No details available.
-            </Alert>
-          )}
-        </Modal.Body>
-        <Modal.Footer>
-          <Button variant="secondary" onClick={() => setShowDetailsModal(false)}>
-            Close
-          </Button>
-        </Modal.Footer>
-      </Modal>
+      <AdvancedPopup
+        show={popup.show}
+        type={popup.type}
+        title={popup.title}
+        message={popup.message}
+        onClose={closePopup}
+        onConfirm={popup.onConfirm || closePopup}
+        confirmText={popup.confirmText}
+        cancelText={popup.cancelText}
+        showCancel={popup.showCancel}
+        loading={popup.loading}
+      />
     </div>
   );
 };

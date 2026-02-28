@@ -50,7 +50,23 @@ const Navbar = () => {
     user.type === "admin"
       ? `/teacher/profile/${user.id}`
       : "/profile";
-
+const auditPath =
+  user.type === "admin"
+    ? "/teacher/audit"
+    : null;
+const studentEditRequestsPath =
+  user.type === "admin"
+    ? "/teacher/profile-edit-requests"
+    : null;
+const teacherstudent =
+  user.type === "admin"
+    ? "/teacher/students"
+    : null;
+const teacherProctoringPath =
+  user.type === "admin"
+    ? "/teacher/proctoring-dashboard"
+    : null;
+  
   return (
     <>
       {/* Embedded CSS */}
@@ -141,6 +157,54 @@ const Navbar = () => {
                 </li>
               )}
 
+              {/* Audit (Teacher Only) */}
+{user.type === "admin" && (
+  <li className="nav-item mx-lg-2">
+    <Link
+      to={auditPath}
+      className={getNavLinkClass(auditPath)}
+      onClick={handleLinkClick}
+    >
+      Audit
+    </Link>
+  </li>
+)}
+
+{user.type === "admin" && (
+  <li className="nav-item mx-lg-2">
+    <Link
+      to={studentEditRequestsPath}
+      className={getNavLinkClass(studentEditRequestsPath)}
+      onClick={handleLinkClick}
+    >
+      Student Edit Requests
+    </Link>
+  </li>
+)}
+
+
+{user.type === "admin" && (
+  <li className="nav-item mx-lg-2">
+    <Link
+      to={teacherstudent}
+      className={getNavLinkClass(teacherstudent)}
+      onClick={handleLinkClick}
+    >
+      Students
+    </Link>
+  </li>
+)}
+{user.type === "admin" && (
+  <li className="nav-item mx-lg-2">
+    <Link
+      to={teacherProctoringPath}
+      className={getNavLinkClass(teacherProctoringPath)}
+      onClick={handleLinkClick}
+    >
+      Proctoring
+    </Link>
+  </li>
+)}
               {/* Feedback */}
               <li className="nav-item mx-lg-2">
                 <Link

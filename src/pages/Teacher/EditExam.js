@@ -9,6 +9,7 @@ import {
   FaPencilAlt, FaClock, FaGraduationCap, FaDollarSign, FaCalendarAlt,
   FaSave, FaPlus, FaTrash, FaCheckCircle
 } from "react-icons/fa";
+import AdvancedPopup from "../../components/AdvancedPopup";
 
 const EditExam = () => {
   const { examId } = useParams();
@@ -25,6 +26,17 @@ const EditExam = () => {
   const [message, setMessage] = useState({ type: "", text: "" });
   const [progress, setProgress] = useState(0);
   const timerRef = useRef(null);
+  const [popup, setPopup] = useState({
+    show: false,
+    type: "info",
+    title: "",
+    message: "",
+    confirmText: "OK",
+    cancelText: "Cancel",
+    showCancel: false,
+    loading: false,
+    onConfirm: null
+  });
 
   // ----------------- Auto message with progress -----------------
   const showMessage = (type, text) => {
@@ -101,10 +113,33 @@ const EditExam = () => {
   };
   const addQuestion = () => setQuestions(prev => [...prev, { QuestionId:null, questionText:"", options:["","","",""], correctOption:0 }]);
   const removeQuestion = (qIndex) => {
-    const q = questions[qIndex];
-    if(q.QuestionId && !window.confirm("Remove existing question permanently?")) return;
     const newQ = questions.filter((_,i)=>i!==qIndex);
     setQuestions(newQ.length?newQ:[{ QuestionId:null, questionText:"", options:["","","",""], correctOption:0 }]);
+  };
+
+  const requestRemoveQuestion = (qIndex) => {
+    const q = questions[qIndex];
+
+    if (!q.QuestionId) {
+      removeQuestion(qIndex);
+      return;
+    }
+
+    setPopup({
+      show: true,
+      type: "confirm",
+      title: "Remove Question",
+      message: "Remove existing question permanently?",
+      confirmText: "Remove",
+      cancelText: "Cancel",
+      showCancel: true,
+      loading: false,
+      onConfirm: () => removeQuestion(qIndex)
+    });
+  };
+
+  const closePopup = () => {
+    setPopup((prev) => (prev.loading ? prev : { ...prev, show: false }));
   };
 
   // ----------------- Submit -----------------
@@ -233,7 +268,7 @@ const EditExam = () => {
               <Card key={qIndex} className="mb-4 shadow-sm border-secondary border-opacity-25">
                 <Card.Header className="d-flex justify-content-between align-items-center bg-light">
                   <span className="fw-bold">Question {qIndex+1} {q.QuestionId?<Badge bg="info" className="ms-2">Existing</Badge>:<Badge bg="warning" text="dark" className="ms-2">New</Badge>}</span>
-                  <Button variant="outline-danger" size="sm" onClick={()=>removeQuestion(qIndex)}><FaTrash/> Remove</Button>
+                  <Button variant="outline-danger" size="sm" onClick={()=>requestRemoveQuestion(qIndex)}><FaTrash/> Remove</Button>
                 </Card.Header>
                 <Card.Body>
                   <Form.Group className="mb-3">
@@ -282,6 +317,19 @@ const EditExam = () => {
           </Col>
         </Row>
       </Form>
+
+      <AdvancedPopup
+        show={popup.show}
+        type={popup.type}
+        title={popup.title}
+        message={popup.message}
+        onClose={closePopup}
+        onConfirm={popup.onConfirm || closePopup}
+        confirmText={popup.confirmText}
+        cancelText={popup.cancelText}
+        showCancel={popup.showCancel}
+        loading={popup.loading}
+      />
     </Container>
   );
 };

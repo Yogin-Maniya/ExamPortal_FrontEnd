@@ -1,37 +1,34 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { registerUser } from "../services/api";
-import './CSS/Register.css';
-
-import {
-  FaUser,
-  FaEnvelope,
-  FaLock,
-  FaGraduationCap,
-  FaSpinner,
-} from "react-icons/fa";
+import "./CSS/Register.css";
+import { FaUser, FaEnvelope, FaLock, FaGraduationCap, FaSpinner } from "react-icons/fa";
+import AdvancedPopup from "../components/AdvancedPopup";
 
 const Register = () => {
   const [user, setUser] = useState({
     name: "",
     email: "",
     studentClass: "",
-    password: "",
+    password: ""
   });
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
-  const [showPopup, setShowPopup] = useState(false); // 🔹 popup state
+  const [showPopup, setShowPopup] = useState(false);
+  const [advancedPopup, setAdvancedPopup] = useState({
+    show: false,
+    type: "info",
+    title: "",
+    message: "",
+    confirmText: "OK",
+    cancelText: "Cancel",
+    showCancel: false,
+    loading: false,
+    onConfirm: null
+  });
   const navigate = useNavigate();
 
-  const classes = [
-    "B.Tech CSE",
-    "B.Tech ECE",
-    "B.Tech IT",
-    "B.Tech ME",
-    "B.Tech CE",
-    "BCA",
-    "BBA",
-  ];
+  const classes = ["B.Tech CSE", "B.Tech ECE", "B.Tech IT", "B.Tech ME", "B.Tech CE", "BCA", "BBA"];
 
   const handleChange = (e) => {
     setUser({ ...user, [e.target.name]: e.target.value });
@@ -51,19 +48,25 @@ const Register = () => {
 
     try {
       await registerUser(user);
-      alert("Registration successful!");
-      navigate("/login");
-    } catch (error) {
-      setError(
-        error.response?.data?.error || "Registration failed. Please try again."
-      );
+      setAdvancedPopup({
+        show: true,
+        type: "success",
+        title: "Registration Successful",
+        message: "Your account has been created. Continue to login.",
+        confirmText: "Go to Login",
+        cancelText: "Cancel",
+        showCancel: false,
+        loading: false,
+        onConfirm: () => navigate("/login")
+      });
+    } catch (apiError) {
+      setError(apiError.response?.data?.error || "Registration failed. Please try again.");
     } finally {
       setLoading(false);
       setShowPopup(false);
     }
   };
 
-  // 🔹 Show popup only if loading > 3.5s
   useEffect(() => {
     let timer;
     if (loading) {
@@ -72,30 +75,26 @@ const Register = () => {
     return () => clearTimeout(timer);
   }, [loading]);
 
+  const closeAdvancedPopup = () => {
+    setAdvancedPopup((prev) => (prev.loading ? prev : { ...prev, show: false }));
+  };
+
   return (
     <div className="d-flex justify-content-center align-items-center vh-100 bg-light">
-      {/* 🔹 Delayed Popup */}
       {showPopup && (
-  <div
-    className="position-fixed top-0 start-0 w-100 h-100 d-flex justify-content-center align-items-center bg-dark bg-opacity-50"
-    style={{ zIndex: 1050 }}
-  >
-    <div className="bg-white rounded shadow p-4 text-center">
-      <FaSpinner className="spin mb-3 text-primary" size={40} />
-      <h5 className="fw-bold">Server is starting… please wait</h5>
-      <p>
-        It may take a few seconds if our server was inactive. Thank you for your
-        patience!
-      </p>
-    </div>
-  </div>
-)}
+        <div
+          className="position-fixed top-0 start-0 w-100 h-100 d-flex justify-content-center align-items-center bg-dark bg-opacity-50"
+          style={{ zIndex: 1050 }}
+        >
+          <div className="bg-white rounded shadow p-4 text-center">
+            <FaSpinner className="spin mb-3 text-primary" size={40} />
+            <h5 className="fw-bold">Server is starting, please wait</h5>
+            <p>It may take a few seconds if our server was inactive.</p>
+          </div>
+        </div>
+      )}
 
-
-      <div
-        className="card shadow-lg p-4"
-        style={{ maxWidth: "400px", width: "100%" }}
-      >
+      <div className="card shadow-lg p-4" style={{ maxWidth: "400px", width: "100%" }}>
         <h2 className="text-center text-primary mb-3">Create an Account</h2>
 
         {error && <p className="text-danger text-center">{error}</p>}
@@ -166,11 +165,7 @@ const Register = () => {
             />
           </div>
 
-          <button
-            type="submit"
-            className="btn btn-primary w-100"
-            disabled={loading}
-          >
+          <button type="submit" className="btn btn-primary w-100" disabled={loading}>
             {loading ? "Registering..." : "Register"}
           </button>
         </form>
@@ -182,6 +177,19 @@ const Register = () => {
           </a>
         </p>
       </div>
+
+      <AdvancedPopup
+        show={advancedPopup.show}
+        type={advancedPopup.type}
+        title={advancedPopup.title}
+        message={advancedPopup.message}
+        onClose={closeAdvancedPopup}
+        onConfirm={advancedPopup.onConfirm || closeAdvancedPopup}
+        confirmText={advancedPopup.confirmText}
+        cancelText={advancedPopup.cancelText}
+        showCancel={advancedPopup.showCancel}
+        loading={advancedPopup.loading}
+      />
     </div>
   );
 };

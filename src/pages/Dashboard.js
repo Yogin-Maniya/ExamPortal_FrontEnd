@@ -119,7 +119,7 @@ const Dashboard = () => {
                       </Button>
                       <Button
                         variant="primary"
-                        onClick={() => navigate(`/take-exam/${exam.ExamId}`)}
+                        onClick={() => navigate(`/exam/${exam.ExamId}`)}
                       >
                         Start
                       </Button>

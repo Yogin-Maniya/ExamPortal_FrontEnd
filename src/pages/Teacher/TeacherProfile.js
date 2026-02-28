@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import api from "../../services/api";
 import { jwtDecode } from "jwt-decode";
+import { Container, Card, Spinner, Alert } from "react-bootstrap";
 
 const TeacherProfile = () => {
   const [admin, setAdmin] = useState(null);
@@ -10,7 +11,6 @@ const TeacherProfile = () => {
   useEffect(() => {
     const fetchAdminProfile = async () => {
       try {
-        // Get token
         const token = localStorage.getItem("authToken");
         if (!token) {
           setError("No token found. Please log in again.");
@@ -18,21 +18,15 @@ const TeacherProfile = () => {
           return;
         }
 
-        // Decode token to get adminId
         const decoded = jwtDecode(token);
-        const adminId = decoded.adminId; // Because you signed token with { adminId }
+        const adminId = decoded.adminId;
 
-        // Call API
-        const response = await api.get(
-          `/admin/admins/${adminId}`,
-          {
-            headers: { Authorization: `Bearer ${token}` },
-          }
-        );
+        const response = await api.get(`/admin/admins/${adminId}`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
 
         setAdmin(response.data);
       } catch (err) {
-        console.error("Error fetching admin profile:", err);
         setError("Failed to fetch admin profile.");
       } finally {
         setLoading(false);
@@ -42,30 +36,22 @@ const TeacherProfile = () => {
     fetchAdminProfile();
   }, []);
 
-  if (loading) return <div className="text-center mt-5">Loading profile...</div>;
-  if (error) return <div className="text-danger text-center mt-5">{error}</div>;
+  if (loading) return <Container className="text-center mt-5"><Spinner animation="border" /></Container>;
+  if (error) return <Container className="mt-5"><Alert variant="danger">{error}</Alert></Container>;
 
   return (
-    <div className="container mt-5">
+    <Container className="mt-5">
       <h2 className="mb-4 text-primary">Teacher Profile</h2>
-      <div className="card shadow-sm p-4">
-        <p>
-          <strong>Admin ID:</strong> {admin?.AdminId}
-        </p>
-        <p>
-          <strong>Username:</strong> {admin?.Username}
-        </p>
-        <p>
-          <strong>Email:</strong> {admin?.Email}
-        </p>
+      <Card className="shadow-sm p-4">
+        <p><strong>Admin ID:</strong> {admin?.AdminId}</p>
+        <p><strong>Username:</strong> {admin?.Username}</p>
+        <p><strong>Email:</strong> {admin?.Email}</p>
         <p>
           <strong>Created At:</strong>{" "}
-          {admin?.CreatedAt
-            ? new Date(admin.CreatedAt).toLocaleString()
-            : ""}
+          {admin?.CreatedAt ? new Date(admin.CreatedAt).toLocaleString() : "N/A"}
         </p>
-      </div>
-    </div>
+      </Card>
+    </Container>
   );
 };
 

@@ -1,9 +1,34 @@
-.take-exam-container { background-color: #f8f9fa; }
+.take-exam-container {
+  background:
+    radial-gradient(circle at top right, rgba(13, 110, 253, 0.08), transparent 40%),
+    radial-gradient(circle at bottom left, rgba(25, 135, 84, 0.07), transparent 45%),
+    #f8f9fa;
+}
 .sticky-top { position: sticky; top: 20px; z-index: 10; }
-.question-navigation-panel { border: 1px solid #dee2e6; border-radius: 5px; padding: 5px; }
-.question-card { min-height: 600px; }
-.form-check.option-item { cursor: pointer; display: flex; align-items: center; transition: 0.2s; }
-.option-item:hover { background-color: #f1f1f1; border-color: #0d6efd; }
+.question-navigation-panel {
+  border: 1px solid #dee2e6;
+  border-radius: 10px;
+  padding: 8px;
+  background: #fff;
+}
+.question-card {
+  min-height: 600px;
+  border: 0;
+  border-radius: 14px;
+}
+.form-check.option-item {
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  transition: 0.2s;
+  border: 1px solid transparent;
+  background: #fff;
+}
+.option-item:hover {
+  background-color: #f1f6ff;
+  border-color: #0d6efd;
+  transform: translateY(-1px);
+}
 .option-label { margin-left: 10px; font-size: 1.05rem; font-weight: 500; }
 
 .submission-overlay {

@@ -1,0 +1,42 @@
+.advanced-popup-modal .modal-content {
+  border: 0;
+  border-radius: 20px;
+  overflow: hidden;
+  box-shadow: 0 25px 60px rgba(0, 0, 0, 0.25);
+}
+
+.advanced-popup-modal .modal-header {
+  border-bottom: 0;
+  padding: 1rem 1.25rem 0.25rem;
+}
+
+.advanced-popup-modal .modal-body {
+  padding: 0 1.5rem 1.5rem;
+}
+
+.advanced-popup-backdrop {
+  background: rgba(5, 17, 40, 0.65);
+  backdrop-filter: blur(3px);
+}
+
+.advanced-popup-banner {
+  height: 6px;
+  border-radius: 999px;
+  margin-bottom: 1rem;
+}
+
+.advanced-popup-icon {
+  width: 52px;
+  height: 52px;
+  border-radius: 14px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.35rem;
+  margin-bottom: 0.75rem;
+}
+
+.advanced-popup-message {
+  color: #4c566a;
+  margin: 0;
+}

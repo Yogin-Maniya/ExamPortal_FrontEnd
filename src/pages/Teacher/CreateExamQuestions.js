@@ -1,5 +1,6 @@
 // CreateExamQuestions.jsx
-import React, { useState, useEffect, useCallback, useRef } from "react";
+import { useParams } from "react-router-dom";
+import React, { useState,useRef } from "react";
 import api from "../../services/api";
 
 import {
@@ -17,33 +18,13 @@ import {
 import { FaPlus, FaSave, FaTrash, FaCheckCircle, FaQuestionCircle, FaListOl } from "react-icons/fa";
 
 const CreateExamQuestions = () => {
-  const [examId, setExamId] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const { examId } = useParams();
+  const [loading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [questions, setQuestions] = useState([{ questionText: "", options: ["", "", "", ""], correctOption: 0 }]);
   const [message, setMessage] = useState({ type: "", text: "" });
   const [progress, setProgress] = useState(0);
   const timerRef = useRef(null);
-
-  // Fetch Last Exam ID
-  const fetchLastExamId = useCallback(async () => {
-    setLoading(true);
-    try {
-      const token = localStorage.getItem("authToken");
-      const response = await api.get("/exam/AllExams", {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      if (!response.data || response.data.length === 0) throw new Error("No exams found. Please create an exam first.");
-      const lastExam = response.data[response.data.length - 1];
-      setExamId(lastExam.ExamId);
-    } catch (err) {
-      showMessage("error", err.response?.data?.error || err.message || "Failed to fetch exam ID.");
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
-  useEffect(() => { fetchLastExamId(); }, [fetchLastExamId]);
 
   // Show message with auto-close and progress bar
   const showMessage = (type, text) => {

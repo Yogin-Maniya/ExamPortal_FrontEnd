@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { submitFeedback, getAllFeedback } from "../services/api";
+import { submitFeedback, getStudentFeedback } from "../services/api";
 import {jwtDecode} from "jwt-decode";
 import { useNavigate } from "react-router-dom";
 import { 
@@ -29,7 +29,6 @@ const Feedback = () => {
   // Get Student ID from token
   // ------------------------
   useEffect(() => {
-    const token = localStorage.getItem("token");
     const authToken = localStorage.getItem("authToken");
 
     if (!authToken) {
@@ -37,9 +36,9 @@ const Feedback = () => {
       return;
     }
 
-    if (token) {
+    if (authToken) {
       try {
-        const decoded = jwtDecode(token);
+        const decoded = jwtDecode(authToken);
         setStudentId(decoded.studentId);
       } catch (error) {
         console.error("Invalid Token", error);
@@ -53,7 +52,7 @@ const Feedback = () => {
   const fetchFeedbackData = async (id) => {
     setFetchingFeedback(true);
     try {
-      const response = await getAllFeedback(id);
+      const response = await getStudentFeedback(id);
       const sortedFeedback = (response.data || []).sort(
         (a, b) => new Date(b.CreatedAt) - new Date(a.CreatedAt)
       );
